@@ -191,7 +191,6 @@ router.get('/add/entry', (req, res) => {
       .catch(error => console.error('Error:', error));
     </script>
   `);
-
 });
 
 router.get('/add/user', (req, res) => {

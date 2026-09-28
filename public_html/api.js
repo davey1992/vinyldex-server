@@ -7,17 +7,12 @@ const bcrypt = require ('bcrypt'); //HASHING
 const joi = require ('joi'); //VALIDATOR
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '75kb' }));
 
 const PORT = process.env.PORT || 5000;
 const pool = require('./config/db');
 
-
-//ERROR 409 DUPLICATES
-//500 DATABASE ERROR
 //CHANGE VARIABLE NAME
-//SPACING FORMATTING
-//ADD MESSAGES
 
 app.get('/', (req, res) => {
   res.send('VinDex API is live!');
@@ -26,14 +21,29 @@ app.get('/', (req, res) => {
 app.post('/add/list-entry', async (req, res) => {
    let cleanedListEntry;
 
-  const listEntrySchema = joi.object({
-    listID : joi.number().required(),
-    entryID : joi.number().required(),
-    positionOrder : joi.number().required()
+  const schemaListEntry = joi.object({
+    listID: joi.number().integer().required()
+      .messages({
+        'any.required': 'Invalid listID: is a required field',
+        'number.base': 'Invalid listID: expected number format',
+        'number.integer': 'Invalid listID: expected whole number'
+      }),
+    entryID: joi.number().integer().required()
+      .messages({
+        'any.required': 'Invalid entryID: is a required field',
+        'number.base': 'Invalid entryID: expected number format',
+        'number.integer': 'Invalid entryID: expected whole number'
+      }),
+    positionOrder: joi.number().integer().required()
+      .messages({
+        'any.required': 'Invalid positionOrder: is a required field',
+        'number.base': 'Invalid positionOrder: expected number format',
+        'number.integer': 'Invalid positionOrder: expected whole number'
+      })
   });
 
   try {
-    cleanedListEntry = await listEntrySchema.validateAsync({
+    cleanedListEntry = await schemaListEntry.validateAsync({
       listID: req.body.listID,
       entryID: req.body.entryID,
       positionOrder: req.body.positionOrder
@@ -80,15 +90,14 @@ app.post('/add/list-entry', async (req, res) => {
   catch (err) {
     //FORIGN KEY VALIDATION ISSUES
     if (err.code === '23503') {
-      console.log(":)");
       let errorMessage = 'Invalid primary key constraint';
    
       switch (err.constraint) {
         case 'fk_list_id':
-          errorMessage = 'List ID Does Not Exist';
+          errorMessage = 'Invalid listID: list does not exist';
         break;
         case 'fk_entry_id':
-          errorMessage = 'Entry ID Does Not Exist';
+          errorMessage = 'Invalid entryID: entry does not exist';
         break;
       }
 
@@ -100,24 +109,34 @@ app.post('/add/list-entry', async (req, res) => {
     }
 
     console.error('Database insert error:', err);
-    return res.status(500).json({
+    return res.status(400).json({
       success:false,
       type: 'database_error',
-      error: 'Internal database configuration error.'
+      error: 'Internal database configuration error'
     });
   }
 });
+
 app.post('/add/entry-genre', async (req, res) => {
 
   let cleanedEntryGenre;
-
-  const entryGenreSchema = joi.object({
-    entryID : joi.number().required(),
-    genreID : joi.number().required()
+  const schemaEntryGenre = joi.object({
+    entryID: joi.number().integer().required()
+      .messages({
+        'any.required': 'Invalid entryID: is a required field',
+        'number.base': 'Invalid entryID: expected number format',
+        'number.integer': 'Invalid entryID: expected whole number'
+      }),
+    genreID: joi.number().integer().required()
+      .messages({
+        'any.required': 'Invalid genreID: is a required field',
+        'number.base': 'Invalid genreID: expected number format',
+        'number.integer': 'Invalid genreID: expected whole number'
+      })
   });
 
   try {
-    cleanedEntryGenre = await entryGenreSchema.validateAsync({
+    cleanedEntryGenre = await schemaEntryGenre.validateAsync({
       entryID: req.body.entryID,
       genreID: req.body.genreID
     }, {stripUnknown: true});
@@ -138,7 +157,8 @@ app.post('/add/entry-genre', async (req, res) => {
       genre_id
     )
     VALUES (
-      $1, $2
+      $1,
+      $2
     )
     RETURNING id;
   `;
@@ -159,15 +179,14 @@ app.post('/add/entry-genre', async (req, res) => {
   catch (err) {
     //FORIGN KEY VALIDATION ISSUES
     if (err.code === '23503') {
-      console.log(":)");
-      let errorMessage = 'Invalid primary key constraint';
+      let errorMessage = 'Invalid foreign key constraint';
    
       switch (err.constraint) {
         case 'fk_entry_id':
-          errorMessage = 'Selected entry does not exist.';
+          errorMessage = 'Invalid entryID: entry does not exist';
         break;
         case 'fk_genre_id':
-          errorMessage = 'Selected genre does not exist.';
+          errorMessage = 'Invalid genreID: genre does not exist';
         break;
       }
 
@@ -179,25 +198,38 @@ app.post('/add/entry-genre', async (req, res) => {
     }
 
     console.error('Database insert error:', err);
-    return res.status(500).json({
+    return res.status(400).json({
       success:false,
       type: 'database_error',
-      error: 'Internal database configuration error.'
+      error: 'Internal database configuration error'
     });
   }
 });
 
 app.post('/add/genre', async (req, res) => {
-  let cleaneGenre;
+  let cleanedGenre;
   
-  const genreSchema = joi.object({
-    parentID: joi.number().allow(null),
-    genreName: joi.string().required(),
-    genreDescription: joi.string()
+  const schemaGenre = joi.object({
+    parentID: joi.number().integer().allow(null)
+      .messages({
+        'number.base': 'Invalid parentID: expected number format',
+        'number.integer': 'Invalid parentID: expected whole number'
+      }),
+    genreName: joi.string().max(150).required()
+      .messages({
+        'any.required': 'Invalid genreName: is a required field',
+        'string.base': 'Invalid genreName: expected string format',
+        'string.max': 'Invalid genreName: limit of 150 characters'
+      }),
+    genreDescription: joi.string().max(500).allow(null)
+      .messages({
+        'string.base': 'Invalid genreDescription: expected string format',
+        'string.max': 'Invalid genreDescription: limit of 500 characters'
+      })
   });
 
   try{
-    cleaneGenre = await genreSchema.validateAsync({
+    cleanedGenre = await schemaGenre.validateAsync({
       parentID: req.body.parentID,
       genreName: req.body.genreName,
       genreDescription: req.body.genreDescription
@@ -214,83 +246,96 @@ app.post('/add/genre', async (req, res) => {
 
   const query = `
     INSERT INTO genres (
-      parent_id, genre_name, genre_description
+      parent_id,
+      genre_name,
+      genre_description
     )
     VALUES (
-      $1, $2, $3
+      $1,
+      $2,
+      $3
     )
     RETURNING id;
   `;
   
   const values = [
-    cleaneGenre.parentID,
-    cleaneGenre.genreName,
-    cleaneGenre.genreDescription
+    cleanedGenre.parentID,
+    cleanedGenre.genreName,
+    cleanedGenre.genreDescription
   ];
 
   try {
     const result = await pool.query(query, values);
-    console.log("Genre: Created - " + cleaneGenre.genreName);
+    console.log("Genre: Created - " + cleanedGenre.genreName);
     return res.status(201).json({ 
       success: true,
-      message: 'Genre ' + cleaneGenre.genreName + ' created in database!', 
+      message: 'Genre ' + cleanedGenre.genreName + ' created in database!', 
       data: result.rows[0]
     });
   } 
   
   catch (err) {
     if (err.code === '23503') {
-      if (err.constraint == 'fk_genre_parent_id') {
-        console.log('Parent genre does not exist');
+      if (err.constraint === 'fk_genre_parent_id') {
+        console.log('Invalid parentID: parent genre does not exist');
         return res.status(400).json({
           success:false,
           error_type:'database_error',
-          message: 'Parent genre does not exist'
+          message: 'Invalid parentID: parent genre does not exist'
         });
       }
     }
     
-    console.log(err);
+    console.error('Database insert error:', err);
     return res.status(400).json({
       success:false,
       error_type:'database_error',
-      message: 'Something went wrong'
+      message: 'Internal database configuration error'
     });
   }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 app.post('/add/list', async (req, res) => {
   let cleanedList;
 
-  const listSchema = joi.object({
-    userID: joi.number(),
-    name: joi.string().max(150),
-    description: joi.string().max(500),
-    type: joi.number().max(99),
-    isPublic: joi.boolean(),
-    state: joi.object().allow(null).default({}),
+  const schemaList = joi.object({
+    userID: joi.number()
+      .messages({
+        'number.base': 'Invalid userID: expected number',
+        'number.integer': 'Invalid userID: expected whole number',
+      }),
+    name: joi.string().max(150)
+      .messages({
+        'string.base': 'Invalid name: expected string format',
+        'string.max': 'Invalid name: limit of 150 characters'
+      }),
+    description: joi.string().max(500)
+      .messages({
+        'string.base': 'Invalid description: expected string format',
+        'string.max': 'Invalid description: limit of 500 characters'
+      }),
+    type: joi.number().integer().max(99)
+      .messages({
+        'number.base': 'Invalid type: expected number format',
+        'number.integer': 'Invalid type: expected an integer',
+        'number.max': 'Invalid type: number must not exceed 99'
+      }),
+    isPublic: joi.boolean()
+      .messages({
+        'boolean.base': 'Invalid isPublic: expected boolean format'
+      }),
+    state: joi.object().allow(null).default({})
+      .messages({
+        'object.base': 'Invalid state: expected object format'
+      }),
     properties: joi.object().allow(null).default({})
+      .messages({
+        'object.base': 'Invalid properties: expected object format'
+      })
   });
 
   try {
-    cleanedList = await listSchema.validateAsync({
+    cleanedList = await schemaList.validateAsync({
       userID: req.body.userID,
       name: req.body.name.trim().replaceAll(/\s+/g, ' '),
       description: req.body.description,
@@ -356,45 +401,53 @@ app.post('/add/list', async (req, res) => {
   catch (err) {
 
     //UNIQUE ISSUE
-    if (err.code == 23505) {
-      if (err.constraint == 'unique_user_list_name') {
+    if (err.code === '23505') {
+      if (err.constraint === 'unique_user_list_name') {
         console.error('Database insert error:', 'There already is a list called this perhaps calling this something else');
-        return res.status(500).json({
+        return res.status(409).json({
           success:false,
           type: 'database_error',
-          error: 'There already is another List called this for this user perhaps calling this something else.'
+          error: 'Invalid userID, listName: Duplicate list name for this user'
         });
       }
     }
   
-    if (err.code == 23503) {
-      if (err.constraint == 'fk_user_id') {
-        console.error('Database insert error:', 'User does not exist');
-        return res.status(500).json({
+    if (err.code === '23503') {
+      if (err.constraint === 'fk_user_id') {
+        console.error('Invalid userID: user does not exist');
+        return res.status(400).json({
           success:false,
           type: 'database_error',
-          error: 'User does not exist'
+          error: 'Invalid userID: user does not exist'
         });
       }
     }
     console.error('Database insert error:', err);
-    return res.status(500).json({
+    return res.status(400).json({
       success:false,
       type: 'database_error',
-      error: 'Internal database configuration error.'
+      error: 'Internal database configuration error'
     });
   }
 });
 
 app.post('/add/media-condition', async (req, res) => {
   let cleanMediaCondition;
-  const mediaConditionSchema = joi.object({
-    condition: joi.string().max(20),
+  const schemaMediaCondition = joi.object({
+    condition: joi.string().max(20)
+      .messages({
+        'string.base': 'Invalid condition: expected string format',
+        'string.max': 'Invalid condition: limit of 20 characters'
+      }),
     description:joi.string().max(500)
+      .messages({
+        'string.base': 'Invalid description: expected string format',
+        'string.max': 'Invalid description: limit of 500 characters'
+      })
   });
 
   try{
-    cleanMediaCondition = await mediaConditionSchema.validateAsync({
+    cleanMediaCondition = await schemaMediaCondition.validateAsync({
       condition: req.body.condition,
       description: req.body.description
     });
@@ -435,35 +488,46 @@ app.post('/add/media-condition', async (req, res) => {
   } 
   catch (err) {
     if (err.code === '23505') {
-      if (err.constraint == 'unique_media_condition') {
-        console.error('Media condition already exists');
-        return res.status(500).json({
+      if (err.constraint === 'unique_media_condition') {
+        console.error('Invalid mediaCondition: already exists');
+        return res.status(409).json({
           success:false,
           type: 'database_error',
-          error: 'Media Condition already exists'
+          error: 'Invalid mediaCondition: already exists'
         });
       }
     }
 
     console.error('Database insert error:', err);
-    return res.status(500).json({
+    return res.status(400).json({
       success:false,
       type: 'database_error',
-      error: 'Internal database configuration error.'
+      error: 'Internal database configuration error'
     });
   }
 });
 
 app.post('/add/relationship', async (req, res) => {
   let cleanRelationship;
-  const relationshipSchema = joi.object({
-    userID: joi.number().integer(),
-    targetUserID: joi.number().integer(),
+  const schemaRelationship = joi.object({
+    userID: joi.number().integer()
+      .messages({
+        'number.base': 'User ID expected number',
+        'number.integer': 'Release year must be a whole number'
+      }),
+    targetUserID: joi.number().integer()
+      .messages({
+        'number.base': 'User ID expected number',
+        'number.integer': 'Release year must be a whole number'
+      }),
     relationshipTypes: joi.object().allow(null).default({})
+      .messages({
+        'object.base': 'Properties must be a valid JSON object'
+      })
   });
 
   try {
-    cleanRelationship = await relationshipSchema.validateAsync({
+    cleanRelationship = await schemaRelationship.validateAsync({
       userID: req.body.userID,
       targetUserID: req.body.targetUserID,
       relationshipTypes: req.body.relationshipTypes,
@@ -510,40 +574,41 @@ app.post('/add/relationship', async (req, res) => {
   } 
   catch (err) {
     //UNIQUE ISSUE
-    if (err.code == 23503) {
-      if(err.constraint == 'fk_relationship_user_id') {
+    if (err.code === '23503') {
+      if(err.constraint === 'fk_relationship_user_id') {
         console.error('Database insert error:', 'User ID Does not exist');
-        return res.status(500).json({
+        return res.status(400).json({
           success:false,
           type: 'database_error',
           error: 'User ID Does not exist'
         });
       }
-      if(err.constraint == 'fk_relationship_user_target_id') {
+      if (err.constraint === 'fk_relationship_user_target_id') {
         console.error('Database insert error:', 'Target User ID Does not exist');
-        return res.status(500).json({
+        return res.status(400).json({
           success:false,
           type: 'database_error',
           error: 'Target User ID Does not exist'
         });
       }
     }
-    if (err.code == 23505) {
-      if (err.constraint == 'unique_user_target') {
-        console.error('Database insert error:', 'User already has a relationship set');
-        return res.status(500).json({
+
+    if (err.code === '23505') {
+      if (err.constraint === 'unique_user_target') {
+        console.error('Database insert error:', 'Invalid userTarget: already assigned');
+        return res.status(409).json({
           success:false,
           type: 'database_error',
-          error: 'User already has a relationship set'
+          error: 'Invalid userTarget: already assigned'
         });
       }
     }
 
     console.error('Database insert error:', err);
-    return res.status(500).json({
+    return res.status(400).json({
       success:false,
       type: 'database_error',
-      error: 'Internal database configuration error.'
+      error: 'Internal database configuration error'
     });
   }
 });
@@ -553,125 +618,134 @@ app.post('/add/entry', async (req, res) => {
   //MAKE SURE USER IS LOGGED IN
   //MAKE SURE JSON DATA IS VALIDATED
   let cleanedEntry;
-  const entrySchema = joi.object({
-    parentID: joi.number().allow(null),
-    userID: joi.number().required()
-      .messages({
-        'any.required': 'User ID is required.',
-        'number.base': 'User ID must be a number.'
+  const schemaEntry = joi.object({
+    parentID: joi.number().integer().allow(null)
+     .messages({
+        'number.base': 'Invalid parentID: expected number(integer) format',
+        'number.integer': 'Invalid parentID: expected an integer',
       }),
-    mediaCondition: joi.number().allow(null)
+    userID: joi.number().integer().required()
       .messages({
-        'number.base': 'Media condition must be a number.'
+        'any.required': 'Invalid userID: is a required field',
+        'number.base': 'Invalid userID: expected number(integer) format',
+        'number.integer': 'Invalid userID: expected an integer',
       }),
-    sleeveCondition: joi.number().allow(null)
+    mediaCondition: joi.number().integer().allow(null)
       .messages({
-        'number.base': 'Sleeve condition must be a number.'
+        'number.base': 'Invalid mediaCondition: expected number(integer) format',
+        'number.integer': 'Invalid mediaCondition: expected an number',
+      }),
+    sleeveCondition: joi.number().integer().allow(null)
+      .messages({
+        'number.base': 'Invalid sleeveCondition: expected number(integer) format',
+        'number.integer': 'Invalid sleeveCondition: expected an integer',
       }),
     title: joi.string().max(150).required()
       .messages({
-        'any.required': 'Title is required.',
-        'string.max': 'Title cannot exceed 150 characters.',
-        'string.base': 'Title must be a string.'
+        'any.required': 'Invalid title: field is required',
+        'string.max': 'Invalid title: limit of 150 characters',
+        'string.base': 'Invalid title: expected string format'
       }),
     artist: joi.string().max(150).allow(null)
       .messages({
-        'string.max': 'Artist name cannot exceed 150 characters.',
-        'string.base': 'Artist must be a string.'
+        'string.max': 'Invalid artist: limit of 150 characters',
+        'string.base': 'Invalid artist: expected string format'
       }),
     location: joi.string().max(150).allow(null)
       .messages({
-        'string.max': 'Location cannot exceed 150 characters.',
-        'string.base': 'Location must be a string.'
+        'string.max': 'Invalid location: limit of 150 characters',
+        'string.base': 'Invalid location: expected string format'
       }),
     itemRef: joi.string().max(150).allow(null)
       .messages({
-        'string.max': 'Item reference cannot exceed 150 characters.',
-        'string.base': 'Item reference must be a string.'
+        'string.base': 'Invalid itemRef: expected string format',
+        'string.max': 'Invalid itemRef: limit of 150 characters'
       }),
-    personalRating: joi.number().max(10).allow(null)
+    personalRating: joi.number().integer().max(10).allow(null)
       .messages({
-        'number.base': 'Personal rating must be a number.',
-        'number.max': 'Personal rating cannot be greater than 10.'
+        'number.base': 'Invalid personalRating: expected number(integer)',
+        'number.max': 'Invalid personalRating: rating can not exceed 10'
       }),
-    bpm: joi.number().max(9999).allow(null)
+    bpm: joi.number().integer().max(9999).allow(null)
       .messages({
-        'number.base': 'BPM must be a number.',
-        'number.max': 'BPM cannot exceed 9999.'
+        'number.base': 'Invalid bpm: expected number(integer) format',
+        'number.integer': 'Invalid bpm: expected an integer',
+        'number.max': 'Invalid bpm: number must not exceed 9999'
       }),
-    spinSpeed: joi.string().max(10).allow(null)
+    spinSpeed: joi.number().integer().max(999).allow(null)
       .messages({
-        'string.max': 'Spin speed cannot exceed 10 characters.',
-        'string.base': 'Spin speed must be a string.'
+        'number.base': 'Invalid spinSpeed: expected number(integer) format',
+        'number.integer': 'Invalid spinSpeed: expected an integer',
+        'number.max': 'Invalid spinSpeed: number must not exceed 999'
       }),
     artWork: joi.string().max(500).allow(null)
       .messages({
-        'string.max': 'Artwork reference cannot exceed 500 characters.',
-        'string.base': 'Artwork must be a string.'
+        'string.base': 'Invalid artWork: expected string format',
+        'string.max': 'Invalid artWork: limit of 500 characters'
       }),
     mediaFormat: joi.number().max(99).allow(null)
       .messages({
-        'number.base': 'Media format must be a number.',
-        'number.max': 'Media format cannot be greater than 99.'
+        'number.base': 'Invalid mediaFormat: expected number format',
+        'number.max': 'Invalid mediaFormat: number cannot exceed 99'
       }),
     camelotCode: joi.string().max(10).allow(null)
       .messages({
-        'string.max': 'Camelot code cannot exceed 10 characters.',
-        'string.base': 'Camelot code must be a string.'
+        'string.base': 'Invalid camelotCode: expected string format',
+        'string.max': 'Invalid camelotCode: limit of 10 characters'
       }),
     internalDuplicate: joi.number().allow(null)
       .messages({
-        'number.base': 'Internal duplicate must be a number.'
+        'number.base': 'Invalid internalDuplicate: expected number format'
       }),
     labelName: joi.string().max(150).allow(null)
       .messages({
-        'string.max': 'Label name cannot exceed 150 characters.',
-        'string.base': 'Label name must be a string.'
+        'string.base': 'Invalid labelName: expected string format',
+        'string.max': 'Invalid labelName: limit of 150 characters'
       }),
     countryCode: joi.string().max(3).allow(null)
       .messages({
-        'string.max': 'Country code cannot exceed 3 characters.',
-        'string.base': 'Country code must be a string.'
+        'string.base': 'Invalid countryCode: expected string format',
+        'string.max': 'Invalid countryCode: limit of 3 characters'
       }),
     purchasePrice: joi.number().precision(2).allow(null)
       .messages({
-        'number.base': 'Purchase price must be a number.',
-        'number.precision': 'Purchase price can have up to 2 decimal places.'
+        'number.base': 'Invalid purchasePrice: expected number format',
+        'number.precision': 'Invalid purchasePrice: can have up to 2 decimal places'
       }),
     releaseYear: joi.number().integer().allow(null)
       .messages({
-        'number.base': 'Release year must be a number.',
-        'number.integer': 'Release year must be a whole number.'
+        'number.base': 'Invalid releaseYear: expected number(integer) format',
+        'number.integer': 'Invalid releaseYear: expected an integer'
       }),
     notes: joi.string().max(500).allow(null)
       .messages({
-        'string.max': 'Notes cannot exceed 500 characters.',
-        'string.base': 'Notes must be a string.'
+        'string.base': 'Invalid notes: expected string format',
+        'string.max': 'Invalid notes: limit of 500 characters'
       }),
     discogsReleaseID: joi.number().allow(null)
       .messages({
-        'number.base': 'Discogs Release ID must be a number.'
+        'number.base': 'Invalid discogsReleaseID: expected number format'
       }),
     catalogNumber: joi.string().max(50).allow(null)
       .messages({
-        'string.max': 'Catalog number cannot exceed 50 characters.',
-        'string.base': 'Catalog number must be a string.'
+        'string.base': 'Invalid catalogNumber: expected string format',
+        'string.max': 'Invalid catalogNumber: limit of 50 characters'
       }),
     properties: joi.object().allow(null).default({})
       .messages({
-        'object.base': 'Properties must be a valid JSON object.'
+        'object.base': 'Invalid properties: expected object format'
       })
   });
 
   try {
-    cleanedEntry = await entrySchema.validateAsync({
+    cleanedEntry = await schemaEntry.validateAsync({
       parentID: req.body.parentID,
       userID: req.body.userID,
       mediaCondition: req.body.mediaCondition,
       sleeveCondition: req.body.sleeveCondition,
       title: req.body.title,
       artist: req.body.artist,
-      locaton: req.body.locaton,
+      location: req.body.location,
       itemRef: req.body.itemRef,
       personalRating: req.body.personalRating,
       bpm: req.body.bpm,
@@ -702,19 +776,56 @@ app.post('/add/entry', async (req, res) => {
   //ADD TO DATABASE
   const query = `
     INSERT INTO entries (
-      user_id, parent_id, title, artist, location, item_ref, 
-      media_condition, sleeve_condition, personal_rating, bpm, 
-      spin_speed, art_work, media_format, camelot_code, 
-      internal_duplicate, label_name, country_code, 
-      purchase_price, release_year, notes, 
-      discogs_release_id, catalog_number, properties
+      user_id,
+      parent_id,
+      title, 
+      artist,
+      location,
+      item_ref, 
+      media_condition,
+      sleeve_condition,
+      personal_rating,
+      bpm, 
+      spin_speed,
+      art_work,
+      media_format,
+      camelot_code, 
+      internal_duplicate, 
+      label_name, 
+      country_code, 
+      purchase_price,
+      release_year,
+      notes, 
+      discogs_release_id,
+      catalog_number,
+      properties
     )
     VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
-      $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 
-      $21, $22, $23
+      $1,
+      $2,
+      $3,
+      $4,
+      $5,
+      $6,
+      $7,
+      $8,
+      $9,
+      $10, 
+      $11,
+      $12,
+      $13,
+      $14,
+      $15,
+      $16,
+      $17,
+      $18,
+      $19,
+      $20, 
+      $21,
+      $22,
+      $23
     )
-    RETURNING id, title, artist;
+    RETURNING id;
   `;
   
   const values = [
@@ -780,10 +891,10 @@ app.post('/add/entry', async (req, res) => {
     }
 
     console.error('Database insert error:', err);
-    return res.status(500).json({
+    return res.status(400).json({
       success:false,
       type: 'database_error',
-      error: 'Internal database configuration error.'
+      error: 'Internal database configuration error'
     });
   }
 
@@ -793,47 +904,54 @@ app.post('/add/user', async (req, res) => {
   // VALIDATION
   let hashedPassword;
   let cleanedUser;
-  const userSchema = joi.object({
+
+  const schemaUser = joi.object({
     displayName: joi.string().pattern(/^[a-zA-Z0-9 _-]+$/).trim().max(25).required()
       .messages({
-        'string.pattern.base': 'Display name can only contain letters, numbers, spaces, underscores, and hyphens.',
-        'string.max': 'Display name cannot exceed 25 characters.',
-        'any.required': 'Display Name is required.'
+        'string.pattern.base': 'Invalid displayName: contains disallowed characters',
+        'string.max': 'Invalid displayName: limit of 25 characters',
+        'any.required': 'Invalid displayName: is a required field'
       }),
     email: joi.string().email({ minDomainSegments: 2 }).required()
       .messages({
-        'string.email': 'Please provide a valid email address',
-        'any.required': 'Email is required.'
+        'string.email': 'Invalid email: expected a valid email address',
+        'any.required': 'Invalid email: is a required field'
       }),
     password: joi.string().pattern(/^(?=.*[a-zA-Z])(?=.*\d)/).min(6).required()
       .messages({
-        'string.pattern.base':'Password too weak!' ,
-        'string.min': 'Password too weak!',
-        'any.required': 'Password is required.'
+        'string.pattern.base': 'Invalid password: must contain at least one letter and one number',
+        'string.min': 'Invalid password: minimum length of 6 characters',
+        'any.required': 'Invalid password: is a required field'
       }),
     passwordMatch: joi.string().valid(joi.ref('password')).required()
       .messages({
-        'any.only': 'Passwords must match',
-        'any.required': 'Passwords must match.'
+        'any.only': 'Invalid passwordMatch: passwords do not match',
+        'any.required': 'Invalid passwordMatch: is a required field'
       }),
     accountType: joi.number().integer().max(99).required()
       .messages({
-        'number.base': 'Account type must be a number',
-        'number.integer': 'Account type must be a number',
-        'number.max': 'Account type can not be greater than 99'
+        'number.base': 'Invalid accountType: expected number(integer) format',
+        'number.integer': 'Invalid accountType: expected an integer',
+        'number.max': 'Invalid accountType: number must not exceed 99'
       }),
     visibility: joi.number().integer().max(99).required()
       .messages({
-        'number.base': 'Visibility must be a number',
-        'number.integer': 'Visibility must be a number',
-        'number.max': 'Visibility can not be greater than 99'
+        'number.base': 'Invalid visibility: expected number(integer) format',
+        'number.integer': 'Invalid visibility: expected an integer',
+        'number.max': 'Invalid visibility: number must not exceed 99'
       }),
-    state: joi.any().allow(null).default(null),
+    state: joi.object().allow(null).default({})
+      .messages({
+        'object.base': 'Invalid state: expected object format'
+      }),
     properties: joi.object().allow(null).default({})
+      .messages({
+        'object.base': 'Invalid properties: expected object format'
+    })
   });
 
   try {
-    cleanedUser = await userSchema.validateAsync({
+    cleanedUser = await schemaUser.validateAsync({
       displayName: req.body.displayName,
       email: req.body.email,
       password: req.body.password,
@@ -872,9 +990,25 @@ app.post('/add/user', async (req, res) => {
   }
  
   const query = `
-    INSERT INTO users (display_name, email, password, account_type, visibility, state, properties)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING id, display_name, email;
+    INSERT INTO users (
+      display_name,
+      email,
+      password,
+      account_type,
+      visibility,
+      state,
+      properties
+    )
+      VALUES (
+      $1,
+      $2,
+      $3,
+      $4,
+      $5,
+      $6,
+      $7
+    )
+    RETURNING id;
   `;
   
   const values = [
@@ -900,30 +1034,30 @@ app.post('/add/user', async (req, res) => {
  
     //DUPLICATE CONSTRAINTS
     if (err.code === '23505') {
-      if (err.constraint == 'unique_display_name') {
-        console.log('Database Error: User Display Name (' + cleanedUser.displayName + ') already exists');
+      if (err.constraint === 'unique_display_name') {
+        console.log(`Invalid displayName: (${cleanedUser.displayName}) already exists`);
         return res.status(409).json({
           success: false,
           type: 'database_error',
-          error: 'User Display Name (' + cleanedUser.displayName + ') already exist.'
+          error: `Invalid displayName: (${cleanedUser.displayName}) already exists`
         });
       }
 
       else {
-        console.log('Database Error: User Display Email (' + cleanedUser.email + ') already exists');
+        console.log(`Invalid email: '${cleanedUser.email}' already exists`);
         return res.status(409).json({
           success: false,
           type: 'database_error',
-          error: 'User Email (' + cleanedUser.email + ') already exist.'
+          error: `Invalid email: '${cleanedUser.email}' already exists`
         });
       }
     }
 
     console.error('Database insert error:', err);
-    return res.status(500).json({
+    return res.status(400).json({
       success:false,
       type: 'database_error',
-      error: 'Internal database configuration error.'
+      error: 'Internal database configuration error'
     });
   }
 });
