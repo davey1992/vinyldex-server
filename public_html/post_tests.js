@@ -3,11 +3,24 @@ const router = express.Router();
 
 
 router.get('/add/list-entry', (req, res) => {
-  const customJSON = JSON.stringify({
-    listID: 1,
-    entryID: 1,
-    positionOrder: 1
-  });
+  const customJSON = JSON.stringify([
+    {
+      listID: 1,
+      entryID: 1,
+      positionOrder: 1
+    },
+    {
+      listID: 1,
+      entryID: 2,
+      positionOrder: 2
+    },
+    {
+      listID: 1,
+      entryID: 3,
+      positionOrder: 3
+    },
+  ]
+);
   
   res.send(`
     <h2>Sending hardcoded JSON for List Entry...</h2>
@@ -194,16 +207,18 @@ router.get('/add/entry', (req, res) => {
 });
 
 router.get('/add/user', (req, res) => {
-  const customJSON = JSON.stringify({
-    "displayName": "Davey@@",
-    "email": "dev@davey92.com",
-    "password": "password_gen",
-    "passwordMatch": "password_gen",
-    "accountType": "1",
-    "visibility": "1",
-    "state": null,
-    "properties": null 
-  });
+  const customJSON = JSON.stringify([
+    {
+      "displayName": "John",
+      "email": "john@davey92.com",
+      "password": "password_gen1",
+      "passwordMatch": "password_gen1",
+      "accountType": "2",
+      "visibility": "1",
+      "state": null,
+      "properties": null 
+    },
+  ]);
   
   res.send(`
     <h2>Sending hardcoded JSON...</h2>

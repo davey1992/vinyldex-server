@@ -2,7 +2,6 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const express = require('express'); //EXPRESS
-const router = express.Router(); //EXPRESS
 const bcrypt = require ('bcrypt'); //HASHING
 const joi = require ('joi'); //VALIDATOR
 
@@ -304,8 +303,9 @@ app.post('/add/list', async (req, res) => {
         'number.base': 'Invalid userID: expected number',
         'number.integer': 'Invalid userID: expected whole number',
       }),
-    name: joi.string().max(150)
+    name: joi.string().required().max(150)
       .messages({
+        'any.required': 'Invalid name: is a required field',
         'string.base': 'Invalid name: expected string format',
         'string.max': 'Invalid name: limit of 150 characters'
       }),
@@ -900,164 +900,172 @@ app.post('/add/entry', async (req, res) => {
 
 });
 
+
+const schemaUser = joi.object({
+  displayName: joi.string().pattern(/^[a-zA-Z0-9 _-]+$/).trim().max(25).required()
+    .messages({
+      'string.pattern.base': 'Invalid displayName: contains disallowed characters',
+      'string.max': 'Invalid displayName: limit of 25 characters',
+      'any.required': 'Invalid displayName: is a required field'
+    }),
+  email: joi.string().email({ minDomainSegments: 2 }).required()
+    .messages({
+      'string.email': 'Invalid email: expected a valid email address',
+      'any.required': 'Invalid email: is a required field'
+    }),
+  password: joi.string().pattern(/^(?=.*[a-zA-Z])(?=.*\d)/).min(6).required()
+    .messages({
+      'string.pattern.base': 'Invalid password: must contain at least one letter and one number',
+      'string.min': 'Invalid password: minimum length of 6 characters',
+      'any.required': 'Invalid password: is a required field'
+    }),
+  passwordMatch: joi.string().valid(joi.ref('password')).required()
+    .messages({
+      'any.only': 'Invalid passwordMatch: passwords do not match',
+      'any.required': 'Invalid passwordMatch: is a required field'
+    }),
+  accountType: joi.number().integer().max(99).required()
+    .messages({
+      'number.base': 'Invalid accountType: expected number(integer) format',
+      'number.integer': 'Invalid accountType: expected an integer',
+      'number.max': 'Invalid accountType: number must not exceed 99'
+    }),
+  visibility: joi.number().integer().max(99).required()
+    .messages({
+      'number.base': 'Invalid visibility: expected number(integer) format',
+      'number.integer': 'Invalid visibility: expected an integer',
+      'number.max': 'Invalid visibility: number must not exceed 99'
+    }),
+  state: joi.object().allow(null).default({})
+    .messages({
+      'object.base': 'Invalid state: expected object format'
+    }),
+  properties: joi.object().allow(null).default({})
+    .messages({
+      'object.base': 'Invalid properties: expected object format'
+  })
+});
+
 app.post('/add/user', async (req, res) => {
-  // VALIDATION
-  let hashedPassword;
-  let cleanedUser;
 
-  const schemaUser = joi.object({
-    displayName: joi.string().pattern(/^[a-zA-Z0-9 _-]+$/).trim().max(25).required()
-      .messages({
-        'string.pattern.base': 'Invalid displayName: contains disallowed characters',
-        'string.max': 'Invalid displayName: limit of 25 characters',
-        'any.required': 'Invalid displayName: is a required field'
-      }),
-    email: joi.string().email({ minDomainSegments: 2 }).required()
-      .messages({
-        'string.email': 'Invalid email: expected a valid email address',
-        'any.required': 'Invalid email: is a required field'
-      }),
-    password: joi.string().pattern(/^(?=.*[a-zA-Z])(?=.*\d)/).min(6).required()
-      .messages({
-        'string.pattern.base': 'Invalid password: must contain at least one letter and one number',
-        'string.min': 'Invalid password: minimum length of 6 characters',
-        'any.required': 'Invalid password: is a required field'
-      }),
-    passwordMatch: joi.string().valid(joi.ref('password')).required()
-      .messages({
-        'any.only': 'Invalid passwordMatch: passwords do not match',
-        'any.required': 'Invalid passwordMatch: is a required field'
-      }),
-    accountType: joi.number().integer().max(99).required()
-      .messages({
-        'number.base': 'Invalid accountType: expected number(integer) format',
-        'number.integer': 'Invalid accountType: expected an integer',
-        'number.max': 'Invalid accountType: number must not exceed 99'
-      }),
-    visibility: joi.number().integer().max(99).required()
-      .messages({
-        'number.base': 'Invalid visibility: expected number(integer) format',
-        'number.integer': 'Invalid visibility: expected an integer',
-        'number.max': 'Invalid visibility: number must not exceed 99'
-      }),
-    state: joi.object().allow(null).default({})
-      .messages({
-        'object.base': 'Invalid state: expected object format'
-      }),
-    properties: joi.object().allow(null).default({})
-      .messages({
-        'object.base': 'Invalid properties: expected object format'
-    })
-  });
-
-  try {
-    cleanedUser = await schemaUser.validateAsync({
-      displayName: req.body.displayName,
-      email: req.body.email,
-      password: req.body.password,
-      passwordMatch: req.body.passwordMatch,
-      accountType: req.body.accountType,
-      visibility: req.body.visibility,
-      state: req.body.state,
-      properties: req.body.properties
-    }, {stripUnknown: true});
-  } 
-  catch (err) {
-    console.log(err.details[0].message);
-    return res.status(400).json({
-      success:false,
-      type: 'database_error',
-      error: err.details[0].message
-    });
+  if (!process.env.VINDEX_PEPPER) {
+    throw new Error('Environment is not properly setup.');
   }
- 
-  try {
-    if (!process.env.VINDEX_PEPPER) {
-      throw new Error('Environment is not properly setup.');
-    }
 
-    const pepper = process.env.VINDEX_PEPPER;
-    hashedPassword = await bcrypt.hash(pepper + cleanedUser.password, 10);
-  }
-  catch (err){
-    console.error('Configuration error: Please check that env.VINDEX_PEPPER is included in ENV.', err);
-
-    return res.status(500).json({
-      success:false,
-      type: 'configuration_error',
-      error: 'Internal server configuration error.'
-    });
-  }
- 
-  const query = `
-    INSERT INTO users (
-      display_name,
-      email,
-      password,
-      account_type,
-      visibility,
-      state,
-      properties
-    )
-      VALUES (
-      $1,
-      $2,
-      $3,
-      $4,
-      $5,
-      $6,
-      $7
-    )
-    RETURNING id;
-  `;
+  const pepper = process.env.VINDEX_PEPPER;
+  const reqBody = Array.isArray(req.body) ? req.body : [req.body];
+  const grammar = reqBody.length == 1 ? 'entry' : 'entries';
   
-  const values = [
-    cleanedUser.displayName,
-    cleanedUser.email,
-    hashedPassword,
-    cleanedUser.accountType,
-    cleanedUser.visibility,
-    cleanedUser.state,
-    cleanedUser.properties
-  ];
+  let hashedPassword;
+  let cleanedUsers = [];
+  let groupErrors = [];
 
-  try {
-    const result = await pool.query(query, values);
-    console.log("User: Created - " + cleanedUser.displayName);
-    return res.status(201).json({ 
-      success: true,
-      message: 'User created in database!', 
-      data: result.rows[0]
-    });
-  } 
-  catch (err) {
- 
-    //DUPLICATE CONSTRAINTS
-    if (err.code === '23505') {
-      if (err.constraint === 'unique_display_name') {
-        console.log(`Invalid displayName: (${cleanedUser.displayName}) already exists`);
-        return res.status(409).json({
-          success: false,
-          type: 'database_error',
-          error: `Invalid displayName: (${cleanedUser.displayName}) already exists`
-        });
-      }
-
-      else {
-        console.log(`Invalid email: '${cleanedUser.email}' already exists`);
-        return res.status(409).json({
-          success: false,
-          type: 'database_error',
-          error: `Invalid email: '${cleanedUser.email}' already exists`
-        });
-      }
+  //VALIDATE FIRST WITHOUT THIS VALIDATEASYNC WILL FAIL ON ALL OF THEM WHICH IS NOT WHAT WE WANT
+  //INITIAL DATA VALIDATION
+  for (const value of reqBody) {
+    try {
+      const tempUser = await schemaUser.validateAsync(value, {stripUnknown: true});
+      cleanedUsers.push(tempUser);
+    } 
+    catch (err) {
+      groupErrors.push(err.details[0].message + " - " + value.displayName);
     }
+  }
+  
+  if (cleanedUsers.length == 0) {
+    console.log ('No users have been added');
+    console.log (groupErrors);
 
-    console.error('Database insert error:', err);
     return res.status(400).json({
       success:false,
       type: 'database_error',
-      error: 'Internal database configuration error'
+      message: 'No users have been added',
+      error: groupErrors
+    });
+  }
+
+  //ATTEPT TO ADD PASSED USERS TO DB
+  for (const cleanedUser of cleanedUsers) {
+    hashedPassword = await bcrypt.hash(pepper + cleanedUser.password, 10);
+  
+    const query = `
+      INSERT INTO users (
+        display_name,
+        email,
+        password,
+        account_type,
+        visibility,
+        state,
+        properties
+      )
+        VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7
+      )
+      RETURNING id;
+    `;
+    
+    const values = [
+      cleanedUser.displayName,
+      cleanedUser.email,
+      hashedPassword,
+      cleanedUser.accountType,
+      cleanedUser.visibility,
+      cleanedUser.state,
+      cleanedUser.properties
+    ];
+
+    try {
+      const result = await pool.query(query, values);
+      console.log("User: Created - " + cleanedUser.displayName);
+    } 
+    catch (err) {
+      //DUPLICATE CONSTRAINTS
+      if (err.code === '23505') {
+        if (err.constraint === 'unique_display_name') {
+          groupErrors.push(`Invalid displayName: (${cleanedUser.displayName}) already exists`);
+        }
+        else {
+          groupErrors.push(`${cleanedUser.email}' already exists`);
+        }
+      }
+      else {
+        console.error('Unexpected database error:', err);
+      }
+    }
+  }
+ 
+  if (groupErrors.length == reqBody.length) {
+    console.log ('No User ' + grammar + ' were added');
+    console.log (groupErrors);
+    return res.status(400).json({
+        success:false,
+        type: 'database_error',
+        message: 'No User ' + grammar + ' were added',
+        errors: groupErrors
+    });
+  }
+  else if (groupErrors.length > 0){
+    console.log ('Added some user ' + grammar + ' in database! See errors');
+    console.log (groupErrors);
+    return res.status(400).json({
+        success:false,
+        type: 'database_error',
+        message: 'Added some user ' + grammar + ' in database! See errors',
+        errors: groupErrors
+    });
+  }
+  else {
+    console.log ('User ' + grammar + ' created in database! No errors')
+     return res.status(201).json({
+        success:true,
+        message: 'User ' + grammar + ' created in database!',
+        errors: groupErrors
     });
   }
 });
