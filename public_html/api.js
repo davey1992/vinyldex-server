@@ -174,11 +174,6 @@ app.post('/add/entry-genre', async (req, res) => {
   try {
     const result = await pool.query(query, values);
     log("Entry Genre: Created - ");
-    return res.status(201).json({ 
-      success: true,
-      message: 'Entry created in database!', 
-      data: result.rows[0]
-    });
   } 
   catch (err) {
     //FORIGN KEY VALIDATION ISSUES
