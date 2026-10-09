@@ -25,6 +25,54 @@ app.get('/', (req, res) => {
   res.send('VinDex API is live!');
 });
 
+const returnAddJSON = (req, grammar, groupErrors) => {
+  const reqBody = Array.isArray(req.body) ? req.body : [req.body];
+
+  if (groupErrors.length == reqBody.length) {
+    const statusMessage = 'No ' + grammar + ' were added';
+    log(statusMessage);
+    log(groupErrors);
+    
+    return {
+      status: 400,
+      data: {
+          success: false,
+          type: 'database_error',
+          message: statusMessage,
+          errors: groupErrors
+      }
+    };
+  }
+  else if (groupErrors.length > 0){
+    const statusMessage = 'Added some ' + grammar + ' in database! See errors';
+    log(statusMessage);
+    log(groupErrors);
+    
+    return {
+      status: 400,
+      data: {
+          success: false,
+          type: 'database_error',
+          message: statusMessage,
+          errors: groupErrors
+      }
+    };
+  }
+  else {
+    const statusMessage = grammar + ' created in database! No errors';
+    log(statusMessage);
+    
+    return {
+      status: 201,
+      data: {
+          success: true,
+          type: 'success',
+          message: statusMessage
+      }
+    };
+  }
+}
+
 const schemaListEntry = joi.object({
   listID: joi.number().integer().required()
     .messages({
@@ -46,81 +94,88 @@ const schemaListEntry = joi.object({
     })
 });
 app.post('/add/list-entry', async (req, res) => {
-  let cleanedListEntry;
-
-  try {
-    cleanedListEntry = await schemaListEntry.validateAsync({
-      listID: req.body.listID,
-      entryID: req.body.entryID,
-      positionOrder: req.body.positionOrder
-    }, {stripUnknown: true});
-  } 
+  const reqBody = Array.isArray(req.body) ? req.body : [req.body];
+  const grammar = reqBody.length == 1 ? 'List Entry' : 'List Entries';
   
-  catch (err) {
-    log(err);
+  let cleanedListEntries = [];
+  let groupErrors = [];
+
+  // VALIDATE FIRST WITHOUT THIS VALIDATEASYNC WILL FAIL ON ALL OF THEM WHICH IS NOT WHAT WE WANT
+  // INITIAL DATA VALIDATION
+  for (const value of reqBody) {
+    try {
+      const tempListEntry = await schemaListEntry.validateAsync(value, {stripUnknown: true});
+      cleanedListEntries.push(tempListEntry);
+    } 
+    catch (err) {
+      groupErrors.push(err.details[0].message + " - " + value.listID);
+    }
+  }
+
+  if (cleanedListEntries.length == 0) {
+    log('No ' + grammar + ' have been added');
+    log(groupErrors);
+
     return res.status(400).json({
       success:false,
       type: 'database_error',
-      error: err.details[0].message
+      message: 'No ' + grammar + ' have been added',
+      error: groupErrors
     });
   }
 
-  const query = `
-    INSERT INTO list_entries (
-      list_id,
-      entry_id,
-      position_order
-    )
-    VALUES (
-      $1,
-      $2,
-      $3
-    )
-    RETURNING id;
-  `;
-  const values = [
-    cleanedListEntry.listID,
-    cleanedListEntry.entryID,
-    cleanedListEntry.positionOrder
-  ];
+  for (const cleanedListEntry of cleanedListEntries) {
+      const query = `
+        INSERT INTO list_entries (
+          list_id,
+          entry_id,
+          position_order
+        )
+        VALUES (
+          $1,
+          $2,
+          $3
+        )
+        RETURNING id;
+      `;
+      const values = [
+        cleanedListEntry.listID,
+        cleanedListEntry.entryID,
+        cleanedListEntry.positionOrder
+      ];
 
-  try {
-    const result = await pool.query(query, values);
-    log("Entry List: Created - ");
-    return res.status(201).json({ 
-      success: true,
-      message: 'List Entry created in database!', 
-      data: result.rows[0]
-    });
-  } 
-  catch (err) {
-    //FORIGN KEY VALIDATION ISSUES
-    if (err.code === '23503') {
-      let errorMessage = 'Invalid primary key constraint';
-   
-      switch (err.constraint) {
-        case 'fk_list_id':
-          errorMessage = 'Invalid listID: list does not exist';
-        break;
-        case 'fk_entry_id':
-          errorMessage = 'Invalid entryID: entry does not exist';
-        break;
+      try {
+        const result = await pool.query(query, values);
+        log(`Entry List: Created - ${cleanedListEntry.listID}`);
+      } 
+      catch (err) {
+        //FORIGN KEY VALIDATION ISSUES
+        if (err.code === '23503') {
+          let errorMessage = 'Invalid primary key constraint';
+      
+          switch (err.constraint) {
+            case 'fk_list_id':
+              errorMessage = `Invalid listID: (${cleanedListEntry.listID}) list does not exist`;
+              groupErrors.push(`Invalid listID: (${cleanedListEntry.listID}) list does not exist`);
+            break;
+            case 'fk_entry_id':
+              errorMessage = `Invalid entryID: (${cleanedListEntry.entryID}) does not exist`;
+              groupErrors.push(`Invalid entryID: (${cleanedListEntry.entryID}) does not exist`);
+            break;
+            default: 
+              console.error('Unexpected database error:', err);
+          }
+        }
+        else {
+          console.error('Unexpected database error:', err);
+        }
       }
-
-      log(errorMessage);
-      return res.status(400).json({ 
-        type: 'database_error',
-        error: errorMessage
-      });
     }
 
-    console.error('Database insert error:', err);
-    return res.status(400).json({
-      success:false,
-      type: 'database_error',
-      error: 'Internal database configuration error'
-    });
-  }
+    const sendUser = returnAddJSON(req, grammar, groupErrors);
+    return res.status(sendUser.status).json(
+      sendUser.data
+    );
 });
 
  const schemaEntryGenre = joi.object({
@@ -226,7 +281,7 @@ const schemaGenre = joi.object({
 app.post('/add/genre', async (req, res) => {
   
   const reqBody = Array.isArray(req.body) ? req.body : [req.body];
-  const grammar = reqBody.length == 1 ? 'genre' : 'genres';
+  const grammar = reqBody.length == 1 ? 'Genre' : 'Genres';
 
   let cleanedGenres = [];
   let groupErrors = [];
@@ -310,34 +365,11 @@ app.post('/add/genre', async (req, res) => {
     }
   }
 
-  if (groupErrors.length == reqBody.length) {
-    log('No ' + grammar + ' were added');
-    log(groupErrors);
-    return res.status(400).json({
-        success:false,
-        type: 'database_error',
-        message: 'No ' + grammar + ' were added',
-        errors: groupErrors
-    });
-  }
-  else if (groupErrors.length > 0){
-    log('Added some ' + grammar + ' in database! See errors');
-    log(groupErrors);
-    return res.status(400).json({
-        success:false,
-        type: 'database_error',
-        message: 'Added some ' + grammar + ' in database! See errors',
-        errors: groupErrors
-    });
-  }
-  else {
-    log('All ' + grammar + ' added in database! No errors')
-    return res.status(201).json({
-        success:true,
-        message: 'User ' + grammar + ' added in database!',
-        errors: groupErrors
-    });
-  }
+  const sendUser = returnAddJSON(req, grammar, groupErrors);
+  return res.status(sendUser.status).json(
+    sendUser.data
+  );
+
 });
 
 const schemaList = joi.object({
@@ -491,7 +523,7 @@ const schemaMediaCondition = joi.object({
 app.post('/add/media-condition', async (req, res) => {
 
   const reqBody = Array.isArray(req.body) ? req.body : [req.body];
-  const grammar = reqBody.length == 1 ? 'media condition' : 'media conditions';
+  const grammar = reqBody.length == 1 ? 'Media Condition' : 'Media Conditions';
 
   let cleanMediaConditions = [];
   let groupErrors = [];
@@ -554,34 +586,10 @@ app.post('/add/media-condition', async (req, res) => {
     }
   }
 
-  if (groupErrors.length == reqBody.length) {
-    log('No ' + grammar + ' were added');
-    log(groupErrors);
-    return res.status(400).json({
-        success:false,
-        type: 'database_error',
-        message: 'No ' + grammar + ' were added',
-        errors: groupErrors
-    });
-  }
-  else if (groupErrors.length > 0){
-    log('Added some ' + grammar + ' in database! See errors');
-    log(groupErrors);
-    return res.status(400).json({
-        success:false,
-        type: 'database_error',
-        message: 'Added some ' + grammar + ' in database! See errors',
-        errors: groupErrors
-    });
-  }
-  else {
-    log('All ' + grammar + ' added in database! No errors')
-    return res.status(201).json({
-        success:true,
-        message: 'User ' + grammar + ' added in database!',
-        errors: groupErrors
-    });
-  }
+  const sendUser = returnAddJSON(req, grammar, groupErrors);
+  return res.status(sendUser.status).json(
+    sendUser.data
+  );
 
 });
 
@@ -815,7 +823,7 @@ app.post('/add/entry', async (req, res) => {
   //MAKE SURE JSON DATA IS VALIDATED
 
   const reqBody = Array.isArray(req.body) ? req.body : [req.body];
-  const grammar = reqBody.length == 1 ? 'entry' : 'entries';
+  const grammar = reqBody.length == 1 ? 'Entry' : 'Entries';
 
   let cleanedEntries = [];
   let groupErrors = [];
@@ -962,38 +970,19 @@ app.post('/add/entry', async (req, res) => {
       }
       else {
         console.error('Unexpected database error:', err);
+        return res.status(400).json({
+          success:false,
+          type: 'database_error',
+          error: 'Internal database configuration error'
+        });
       }
     }
   }
 
-  if (groupErrors.length == reqBody.length) {
-    log('No ' + grammar + ' were added');
-    log(groupErrors);
-    return res.status(400).json({
-        success:false,
-        type: 'database_error',
-        message: 'No ' + grammar + ' were added',
-        errors: groupErrors
-    });
-  }
-  else if (groupErrors.length > 0){
-    log('Added some ' + grammar + ' in database! See errors');
-    log(groupErrors);
-    return res.status(400).json({
-        success:false,
-        type: 'database_error',
-        message: 'Added some ' + grammar + ' in database! See errors',
-        errors: groupErrors
-    });
-  }
-  else {
-    log('All ' + grammar + ' added in database! No errors')
-     return res.status(201).json({
-        success:true,
-        message: 'User ' + grammar + ' added in database!',
-        errors: groupErrors
-    });
-  }
+  const sendUser = returnAddJSON(req, grammar, groupErrors);
+  return res.status(sendUser.status).json(
+    sendUser.data
+  );
 });
 
 const schemaUser = joi.object({
@@ -1048,7 +1037,7 @@ app.post('/add/user', async (req, res) => {
 
   const pepper = process.env.VINDEX_PEPPER;
   const reqBody = Array.isArray(req.body) ? req.body : [req.body];
-  const grammar = reqBody.length == 1 ? 'entry' : 'entries';
+  const grammar = reqBody.length == 1 ? 'User' : 'Users';
   
   let hashedPassword;
   let cleanedUsers = [];
@@ -1133,36 +1122,15 @@ app.post('/add/user', async (req, res) => {
       }
     }
   }
- 
-  if (groupErrors.length == reqBody.length) {
-    log('No User ' + grammar + ' were added');
-    log(groupErrors);
-    return res.status(400).json({
-        success:false,
-        type: 'database_error',
-        message: 'No User ' + grammar + ' were added',
-        errors: groupErrors
-    });
-  }
-  else if (groupErrors.length > 0){
-    log('Added some user ' + grammar + ' in database! See errors');
-    log(groupErrors);
-    return res.status(400).json({
-        success:false,
-        type: 'database_error',
-        message: 'Added some user ' + grammar + ' in database! See errors',
-        errors: groupErrors
-    });
-  }
-  else {
-    log('User ' + grammar + ' created in database! No errors')
-     return res.status(201).json({
-        success:true,
-        message: 'User ' + grammar + ' created in database!',
-        errors: groupErrors
-    });
-  }
+
+  const sendUser = returnAddJSON(req, grammar, groupErrors);
+  return res.status(sendUser.status).json(
+    sendUser.data
+  );
+
 });
+
+
 
 app.listen(5000, () => {
   log('Server running on port 5000');
