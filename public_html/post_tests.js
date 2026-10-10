@@ -1,9 +1,6 @@
 const express = require('express');
 const router = express.Router();
 
-
-
-
 router.get('/add/list-entry', (req, res) => {
   const customJSON = JSON.stringify([
     {
@@ -472,8 +469,8 @@ router.get('/add/entry', (req, res) => {
 router.get('/add/user', (req, res) => {
   const customJSON = JSON.stringify([
     {
-      "displayName": "John",
-      "email": "john@davey92.com",
+      "displayName": "Angela",
+      "email": "angela@davey92.com",
       "password": "password_gen1",
       "passwordMatch": "password_gen1",
       "accountType": "2",
