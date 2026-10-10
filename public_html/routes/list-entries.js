@@ -80,6 +80,15 @@ router.post('/add/list-entry', async (req, res) => {
               console.error('Unexpected database error:', err);
           }
         }
+        else if (err.code === '23505') {
+          if(err.constraint === 'unique_list_id_entry_id') {
+              log(`Invalid list_id: (${cleanedListEntry.listID}) entryID: (${cleanedListEntry.entryID}) already exists`);
+              groupErrors.push(`Invalid list_id: (${cleanedListEntry.listID}) entryID: (${cleanedListEntry.entryID}) already exists`);
+          }
+          else {
+             console.error('Unexpected database error:', err);
+          }
+        }
         else {
           console.error('Unexpected database error:', err);
         }
