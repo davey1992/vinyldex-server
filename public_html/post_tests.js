@@ -131,15 +131,26 @@ router.get('/add/genre', (req, res) => {
 });
 
 router.get('/add/list', (req, res) => {
-  const customJSON = JSON.stringify({
-    "userID": 99,
-    "name": 'Happy Hardcore',
-    "description": "Davey's Favourite Happy Hardcore collection",
-    "type": 1,
-    "isPublic": true,
-    "state": {},
-    "properties": {}
-  });
+  const customJSON = JSON.stringify([
+    {
+      "userID": 1,
+      "name": 'Happy Hardcore',
+      "description": "Davey's Favourite Happy Hardcore collection",
+      "type": 1,
+      "isPublic": true,
+      "state": {},
+      "properties": {}
+    },
+    {
+      "userID": 2,
+      "name": 'Happy Hardcore',
+      "description": "Davey's Favourite Happy Hardcore collection",
+      "type": 1,
+      "isPublic": true,
+      "state": {},
+      "properties": {}
+    }
+]);
   
   res.send(`
     <h2>Sending hardcoded JSON...</h2>
@@ -159,10 +170,16 @@ router.get('/add/list', (req, res) => {
 });
 
 router.get('/add/entry-genre', (req, res) => {
-  const customJSON = JSON.stringify({
-    "entryID": 1,
-    "genreID": 1
-  });
+  const customJSON = JSON.stringify([
+    {
+      "entryID": 1,
+      "genreID": 2
+    },
+    {
+      "entryID": 1,
+      "genreID": 3
+    },
+  ]);
   
   res.send(`
     <h2>Sending hardcoded JSON...</h2>

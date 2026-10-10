@@ -11,7 +11,6 @@ app.use(express.json({ limit: '75kb' }));
 const PORT = process.env.PORT || 5000;
 const pool = require('./config/db');
 
-
 const DEBUG = process.env.NODE_ENV === 'dev';
 function log(message) {
   if (DEBUG) {
@@ -20,7 +19,6 @@ function log(message) {
 }
 
 //CHANGE VARIABLE NAME
-
 app.get('/', (req, res) => {
   res.send('VinDex API is live!');
 });
@@ -94,6 +92,7 @@ const schemaListEntry = joi.object({
     })
 });
 app.post('/add/list-entry', async (req, res) => {
+
   const reqBody = Array.isArray(req.body) ? req.body : [req.body];
   const grammar = reqBody.length == 1 ? 'List Entry' : 'List Entries';
   
@@ -178,7 +177,7 @@ app.post('/add/list-entry', async (req, res) => {
     );
 });
 
- const schemaEntryGenre = joi.object({
+const schemaEntryGenre = joi.object({
   entryID: joi.number().integer().required()
     .messages({
       'any.required': 'Invalid entryID: is a required field',
@@ -192,72 +191,88 @@ app.post('/add/list-entry', async (req, res) => {
       'number.integer': 'Invalid genreID: expected whole number'
     })
 });
+
 app.post('/add/entry-genre', async (req, res) => {
-  let cleanedEntryGenre;
-  try {
-    cleanedEntryGenre = await schemaEntryGenre.validateAsync({
-      entryID: req.body.entryID,
-      genreID: req.body.genreID
-    }, {stripUnknown: true});
-  } 
-  
-  catch (err) {
-    log(err);
-    return res.status(400).json({
-      success:false,
-      type: 'database_error',
-      error: err.details[0].message
-    });
-  }
+  const reqBody = Array.isArray(req.body) ? req.body : [req.body];
+  const grammar = reqBody.length == 1 ? 'Genre' : 'Genres';
 
-  const query = `
-    INSERT INTO entry_genres (
-      entry_id,
-      genre_id
-    )
-    VALUES (
-      $1,
-      $2
-    )
-    RETURNING id;
-  `;
-  const values = [
-    cleanedEntryGenre.entryID,
-    cleanedEntryGenre.genreID
-  ];
+  let cleanedEntryGenres = [];
+  let groupErrors = [];
 
-  try {
-    const result = await pool.query(query, values);
-    log("Entry Genre: Created - ");
-  } 
-  catch (err) {
-    //FORIGN KEY VALIDATION ISSUES
-    if (err.code === '23503') {
-      let errorMessage = 'Invalid foreign key constraint';
-   
-      switch (err.constraint) {
-        case 'fk_entry_id':
-          errorMessage = 'Invalid entryID: entry does not exist';
-        break;
-        case 'fk_genre_id':
-          errorMessage = 'Invalid genreID: genre does not exist';
-        break;
-      }
-
-      log(errorMessage);
-      return res.status(400).json({ 
-        type: 'database_error',
-        error: errorMessage
-      });
+  for (const value of reqBody) {
+    try {
+      const tempEntryGenres = await schemaEntryGenre.validateAsync(value, {stripUnknown: true});
+      cleanedEntryGenres.push(tempEntryGenres);
+    } 
+    catch (err) {
+      groupErrors.push(err.details[0].message + " - " + value.entryID);
     }
+  }
 
-    console.error('Database insert error:', err);
+  if (cleanedEntryGenres.length == 0) {
+    log('No ' + grammar + ' have been added');
+    log(groupErrors);
+
     return res.status(400).json({
       success:false,
       type: 'database_error',
-      error: 'Internal database configuration error'
+      message: 'No ' + grammar + ' have been added',
+      error: groupErrors
     });
   }
+  for (const cleanedEntryGenre of cleanedEntryGenres) {
+    const query = `
+      INSERT INTO entry_genres (
+        entry_id,
+        genre_id
+      )
+      VALUES (
+        $1,
+        $2
+      )
+      RETURNING id;
+    `;
+    const values = [
+      cleanedEntryGenre.entryID,
+      cleanedEntryGenre.genreID
+    ];
+
+    try {
+      const result = await pool.query(query, values);
+      log("Entry Genre: Created - ");
+    } 
+    catch (err) {
+      //FORIGN KEY VALIDATION ISSUES
+      if (err.code === '23503') {    
+        switch (err.constraint) {
+          case 'fk_entry_id':
+            log(`Invalid entryID: (${cleanedEntryGenre.entryID})  does not exist`);
+            groupErrors.push(`Invalid entryID: (${cleanedEntryGenre.entryID})  does not exist`);
+          break;
+          case 'fk_genre_id':
+            log(`Invalid genreID: (${cleanedEntryGenre.genreID}) does not exist`);
+            groupErrors.push(`Invalid genreID: (${cleanedEntryGenre.genreID}) does not exist`);
+          break;
+          default:
+            console.error('Database insert error:', err);
+        }
+      }
+      else if (err.code === '23505') {
+        if (err.constraint === 'unique_entry_id_genre_id') {
+          log(`Invalid EntryGenre (entryID:${cleanedEntryGenre.entryID}, genreID:${cleanedEntryGenre.genreID}) already exists`);
+          groupErrors.push(`Invalid EntryGenre (entryID:${cleanedEntryGenre.entryID}, genreID:${cleanedEntryGenre.genreID}) already exists`);
+        }
+      }
+      else {
+        console.error('Database insert error:', err);
+      }
+    }
+  }
+
+  const sendUser = returnAddJSON(req, grammar, groupErrors);
+  return res.status(sendUser.status).json(
+    sendUser.data
+  );
 });
 
 const schemaGenre = joi.object({
@@ -341,19 +356,19 @@ app.post('/add/genre', async (req, res) => {
     } 
     
     catch (err) {
-      if (err.code === '23505') {
-        if (err.constraint === 'unique_genre_name') {
-          log(`Invalid genreName: (${cleanedGenre.genreName}) already exists`);
-          groupErrors.push(`Invalid genreName: (${cleanedGenre.genreName}) already exists`);
+       if (err.code === '23503') {
+        if (err.constraint === 'fk_genre_parent_id') {
+          log(`Invalid parentID: (${cleanedGenre.parentID}) parent genre does not exist`);
+          groupErrors.push(`Invalid parentID: (${cleanedGenre.parentID}) parent genre does not exist`);
         }
         else {
           console.error('Database insert error:', err);
         }
       }
-      else if (err.code === '23503') {
-        if (err.constraint === 'fk_genre_parent_id') {
-          log(`Invalid parentID: (${cleanedGenre.parentID}) parent genre does not exist`);
-          groupErrors.push(`Invalid parentID: (${cleanedGenre.parentID}) parent genre does not exist`);
+      else if (err.code === '23505') {
+        if (err.constraint === 'unique_genre_name') {
+          log(`Invalid genreName: (${cleanedGenre.genreName}) already exists`);
+          groupErrors.push(`Invalid genreName: (${cleanedGenre.genreName}) already exists`);
         }
         else {
           console.error('Database insert error:', err);
@@ -408,113 +423,111 @@ const schemaList = joi.object({
       'object.base': 'Invalid properties: expected object format'
     })
 });
+
 app.post('/add/list', async (req, res) => {
-  let cleanedList;
+  const reqBody = Array.isArray(req.body) ? req.body : [req.body];
+  const grammar = reqBody.length == 1 ? 'List' : 'Lists';
 
-  try {
-    cleanedList = await schemaList.validateAsync({
-      userID: req.body.userID,
-      name: req.body.name.trim().replaceAll(/\s+/g, ' '),
-      description: req.body.description,
-      type: req.body.type,
-      isPublic: req.body.isPublic,
-      state: req.body.state,
-      properties: req.body.properties
-    });
+  let cleanedLists = [];
+  let groupErrors = [];
+
+  for (const value of reqBody) {
+    try {
+      const tempList = await schemaList.validateAsync(value, { stripUnknown: true });
+      cleanedLists.push(tempList);
+    } 
+    catch (err) {
+      groupErrors.push(err.details[0].message + " - " + (value.name || 'unknown'));
+    }
   }
-  catch (err) {
-
-    log(err);
-    return res.status(400).json({
-      success:false,
-      type: 'database_error',
-      error: err.details[0].message
-    });
-  }
-
-  const query = `
-    INSERT INTO lists (
-      user_id,
-      name, 
-      description, 
-      type,
-      is_public,
-      state,
-      properties
-    )
-    VALUES (
-      $1,
-      $2,
-      $3,
-      $4,
-      $5,
-      $6,
-      $7
-    )
-    RETURNING id;
-  `;
   
-  const values = [
-    cleanedList.userID,
-    cleanedList.name,
-    cleanedList.description,
-    cleanedList.type,
-    cleanedList.isPublic,
-    cleanedList.state,
-    cleanedList.properties
-  ];
+  if (cleanedLists.length == 0) {
+    log('No ' + grammar + ' have been added');
+    log(groupErrors);
 
-  log(values);
-
-  try {
-    const result = await pool.query(query, values);
-    log("List: Created - " + cleanedList.name);
-    return res.status(201).json({ 
-      success: true,
-      message: 'Entry created in database!', 
-      data: result.rows[0]
+    return res.status(400).json({
+      success: false,
+      type: 'database_error',
+      message: 'No ' + grammar + ' have been added',
+      error: groupErrors
     });
-  } 
-  catch (err) {
+  }
 
-    //UNIQUE ISSUE
-    if (err.code === '23505') {
-      if (err.constraint === 'unique_user_list_name') {
-        console.error('Database insert error:', 'There already is a list called this perhaps calling this something else');
-        return res.status(409).json({
-          success:false,
-          type: 'database_error',
-          error: 'Invalid userID, listName: Duplicate list name for this user'
-        });
+  for (const cleanedList of cleanedLists) {
+    const query = `
+      INSERT INTO lists (
+        user_id,
+        name, 
+        description, 
+        type,
+        is_public,
+        state,
+        properties
+      )
+      VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7
+      )
+      RETURNING id;
+    `;
+    
+    const values = [
+      cleanedList.userID,
+      cleanedList.name,
+      cleanedList.description,
+      cleanedList.type,
+      cleanedList.isPublic,
+      cleanedList.state,
+      cleanedList.properties
+    ];
+
+    log(values);
+
+    try {
+      const result = await pool.query(query, values);
+      log("List: Created - " + cleanedList.name);
+    } 
+    catch (err) {
+      if (err.code === '23503') {
+        if (err.constraint === 'fk_user_id') {
+          log(`Invalid userID: ${cleanedList.userID} does not exist`);
+          groupErrors.push(`Invalid userID: ${cleanedList.userID} does not exist`);
+        } else {
+          console.error('Unexpected database error:', err);
+        }
+      }
+      else if (err.code === '23505') {
+        if (err.constraint === 'unique_user_list_name') {
+          log(`Invalid userID (${cleanedList.userID}) , name (${cleanedList.name}): Duplicate list name for this user`);
+          groupErrors.push(`Invalid userID (${cleanedList.userID}) , name (${cleanedList.name}): Duplicate list name for this user`);
+        } else {
+          console.error('Unexpected database error:', err);
+        }
+      }
+      else {
+        console.error('Unexpected database error:', err);
       }
     }
-  
-    if (err.code === '23503') {
-      if (err.constraint === 'fk_user_id') {
-        console.error('Invalid userID: user does not exist');
-        return res.status(400).json({
-          success:false,
-          type: 'database_error',
-          error: 'Invalid userID: user does not exist'
-        });
-      }
-    }
-    console.error('Database insert error:', err);
-    return res.status(400).json({
-      success:false,
-      type: 'database_error',
-      error: 'Internal database configuration error'
-    });
   }
+
+  const sendUser = returnAddJSON(req, grammar, groupErrors);
+  return res.status(sendUser.status).json(sendUser.data);
 });
 
+  
 const schemaMediaCondition = joi.object({
-  condition: joi.string().max(20)
+  condition: joi.string().max(20).required()
     .messages({
+      'any.required': 'Invalid condition: is a required field',
       'string.base': 'Invalid condition: expected string format',
       'string.max': 'Invalid condition: limit of 20 characters'
     }),
-  description:joi.string().max(500)
+  description: joi.string().max(500).allow(null)
     .messages({
       'string.base': 'Invalid description: expected string format',
       'string.max': 'Invalid description: limit of 500 characters'
@@ -610,93 +623,91 @@ const schemaRelationship = joi.object({
     })
 });
 app.post('/add/relationship', async (req, res) => {
-  let cleanRelationship;
+  const reqBody = Array.isArray(req.body) ? req.body : [req.body];
+  const grammar = reqBody.length == 1 ? 'Relationship' : 'Relationships';
 
-  try {
-    cleanRelationship = await schemaRelationship.validateAsync({
-      userID: req.body.userID,
-      targetUserID: req.body.targetUserID,
-      relationshipTypes: req.body.relationshipTypes,
-    });
+  let cleanedRelationships = [];
+  let groupErrors = [];
+
+  for (const value of reqBody) {
+    try {
+      const cleanRelationship = await schemaRelationship.validateAsync(value, { stripUnknown: true });
+      cleanedRelationships.push(cleanRelationship);
+    } 
+    catch (err) {
+      groupErrors.push(err.details[0].message + " - " + (value.userID || 'unknown'));
+    }
   }
 
-  catch (err) {
-    log(err);
+  if (cleanedRelationships.length == 0) {
+    log('No ' + grammar + ' have been added');
+    log(groupErrors);
+
     return res.status(400).json({
-      success:false,
+      success: false,
       type: 'database_error',
-      error: err.details[0].message
+      message: 'No ' + grammar + ' have been added',
+      error: groupErrors
     });
   }
 
-  const query = `
-    INSERT INTO relationships (
-      user_id,
-      target_user_id, 
-      relationship_types
-    )
-    VALUES (
-      $1,
-      $2,
-      $3
-    )
-    RETURNING id;
-  `;
-  
-  const values = [
-    cleanRelationship.userID,
-    cleanRelationship.targetUserID,
-    cleanRelationship.relationshipTypes
-  ];
+  for (const cleanRelationship of cleanedRelationships) {
+    const query = `
+      INSERT INTO relationships (
+        user_id,
+        target_user_id, 
+        relationship_types
+      )
+      VALUES (
+        $1,
+        $2,
+        $3
+      )
+      RETURNING id;
+    `;
+    
+    const values = [
+      cleanRelationship.userID,
+      cleanRelationship.targetUserID,
+      cleanRelationship.relationshipTypes
+    ];
 
-  try {
-    const result = await pool.query(query, values);
-    log("Relationship: Created - " + cleanRelationship.userID + ' - ' + cleanRelationship.targetUserID);
-    return res.status(201).json({ 
-      success: true,
-      message: 'Entry created in database!', 
-      data: result.rows[0]
-    });
-  } 
-  catch (err) {
-    //UNIQUE ISSUE
-    if (err.code === '23503') {
-      if(err.constraint === 'fk_relationship_user_id') {
-        console.error('Database insert error:', 'User ID Does not exist');
-        return res.status(400).json({
-          success:false,
-          type: 'database_error',
-          error: 'User ID Does not exist'
-        });
+    try {
+      const result = await pool.query(query, values);
+      log("Relationship: Created - " + cleanRelationship.userID + ' - ' + cleanRelationship.targetUserID);
+    } 
+    catch (err) {
+      if (err.code === '23503') {
+        switch (err.constraint) {
+          case 'fk_relationship_user_id':
+            log(`Invalid userID: ${cleanRelationship.userID} does not exist`);
+            groupErrors.push(`Invalid userID: ${cleanRelationship.userID} does not exist`);
+            break;
+          case 'fk_relationship_user_target_id':
+            log(`Invalid targetUserID: ${cleanRelationship.targetUserID} does not exist`);
+            groupErrors.push(`Invalid targetUserID: ${cleanRelationship.targetUserID} does not exist`);
+            break;
+          default:
+            console.error('Database insert error:', err);
+        }
       }
-      if (err.constraint === 'fk_relationship_user_target_id') {
-        console.error('Database insert error:', 'Target User ID Does not exist');
-        return res.status(400).json({
-          success:false,
-          type: 'database_error',
-          error: 'Target User ID Does not exist'
-        });
+      else if (err.code === '23505') {
+        if (err.constraint === 'unique_user_target') {
+          log(`Invalid userTarget: already assigned (${cleanRelationship.userID} -> ${cleanRelationship.targetUserID})`);
+          groupErrors.push(`Invalid userTarget: already assigned for userID ${cleanRelationship.userID}`);
+        }
+        else {
+          console.error('Database insert error:', err);
+        }
+      } 
+      else {
+        console.error('Database insert error:', err);
       }
     }
-
-    if (err.code === '23505') {
-      if (err.constraint === 'unique_user_target') {
-        console.error('Database insert error:', 'Invalid userTarget: already assigned');
-        return res.status(409).json({
-          success:false,
-          type: 'database_error',
-          error: 'Invalid userTarget: already assigned'
-        });
-      }
-    }
-
-    console.error('Database insert error:', err);
-    return res.status(400).json({
-      success:false,
-      type: 'database_error',
-      error: 'Internal database configuration error'
-    });
   }
+
+  const sendUser = returnAddJSON(req, grammar, groupErrors);
+  return res.status(sendUser.status).json(sendUser.data);
 });
 
 const schemaEntry = joi.object({
@@ -942,7 +953,6 @@ app.post('/add/entry', async (req, res) => {
    
       //FORIGN KEY VALIDATION ISSUES
       if (err.code === '23503') {
-        
         let errorMessage = 'Invalid primary key constraint';
     
         switch (err.constraint) {
@@ -970,11 +980,6 @@ app.post('/add/entry', async (req, res) => {
       }
       else {
         console.error('Unexpected database error:', err);
-        return res.status(400).json({
-          success:false,
-          type: 'database_error',
-          error: 'Internal database configuration error'
-        });
       }
     }
   }
@@ -1111,10 +1116,15 @@ app.post('/add/user', async (req, res) => {
       //DUPLICATE CONSTRAINTS
       if (err.code === '23505') {
         if (err.constraint === 'unique_display_name') {
+          log(`Invalid displayName: (${cleanedUser.displayName}) already exists`);
           groupErrors.push(`Invalid displayName: (${cleanedUser.displayName}) already exists`);
         }
+        else if (err.constraint === 'unique_email') {
+          log(`Invalid email: (${cleanedUser.email}) already exists`);
+          groupErrors.push(`Invalid email: (${cleanedUser.email}) already exists`);
+        }
         else {
-          groupErrors.push(`${cleanedUser.email}' already exists`);
+          console.error('Unexpected database error:', err);
         }
       }
       else {
