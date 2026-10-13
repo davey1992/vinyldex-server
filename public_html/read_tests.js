@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 
-router.get('/send/entries', (req, res) => {
+router.get('/read/entries', (req, res) => {
   const customJSON = JSON.stringify({
     "userID": 1,
     "parentID": null,
@@ -31,12 +31,12 @@ router.get('/send/entries', (req, res) => {
 
 
   res.send(`
-    <h2>Reading Entries...</h2>
+    <h2>Reading Entries..</h2>
     <script>
       const payload = ${JSON.stringify(customJSON)};
 
       fetch('/read/entries', {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: payload
       })

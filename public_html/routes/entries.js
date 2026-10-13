@@ -151,7 +151,8 @@ router.post('/add/entry', async (req, res) => {
   );
 });
 
-router.get('/read/entries', async (req, res) => {
+router.post('/read/entries', async (req, res) => {
+ 
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     log('Entries must be an object');
     return res.status(500).json({
@@ -162,11 +163,27 @@ router.get('/read/entries', async (req, res) => {
     });
   }
 
+  console.log(":)");
+
   const entryResult = await validatedEntry(req.body, schemaEntry);
   const cleanedEntry = entryResult.entry;
   const groupError = entryResult.error;
 
-  log(cleanedEntry);  
+  const query = `SELECT * FROM entries WHERE user_id = $1`;
+
+  const values = [
+      cleanedEntry.userID
+  ]
+
+  console.log(values);
+
+  try {
+    const result = await pool.query(query, values);
+    log(result.rows);
+  } 
+  catch (err) {
+    log(err);
+  }
 });
 
 module.exports = router;
