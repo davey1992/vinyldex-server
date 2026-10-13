@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 
-router.get('/read/entries', (req, res) => {
+router.get('/send/entries', (req, res) => {
   const customJSON = JSON.stringify({
     "userID": 1,
     "parentID": null,
