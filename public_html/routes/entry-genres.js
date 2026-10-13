@@ -3,25 +3,15 @@ const express = require('express');
 const pool = require('../config/db');
 const router = express.Router();
 
-const {returnAddJSON, log} = require('../utils/helpers');
+const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
 const {schemaEntryGenre} = require('../utils/schema.js');
 
 router.post('/add/entry-genre', async (req, res) => {
-  const reqBody = Array.isArray(req.body) ? req.body : [req.body];
-  const grammar = reqBody.length == 1 ? 'Genre' : 'Genres';
+  const entryGenresResults = await validatedEntries(req.body, schemaEntryGenre);
+  const cleanedEntryGenres = entryGenresResults.entries;
+  const groupErrors = entryGenresResults.errors;
 
-  let cleanedEntryGenres = [];
-  let groupErrors = [];
-
-  for (const value of reqBody) {
-    try {
-      const tempEntryGenres = await schemaEntryGenre.validateAsync(value, {stripUnknown: true});
-      cleanedEntryGenres.push(tempEntryGenres);
-    } 
-    catch (err) {
-      groupErrors.push(err.details[0].message + " - " + value.entryID);
-    }
-  }
+  const grammar = req.body.length == 1 ? 'Genre' : 'Genres';
 
   if (cleanedEntryGenres.length == 0) {
     log('No ' + grammar + ' have been added');

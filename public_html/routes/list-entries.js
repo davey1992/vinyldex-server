@@ -3,28 +3,15 @@ const express = require('express');
 const pool = require('../config/db');
 const router = express.Router();
 
-const {returnAddJSON, log} = require('../utils/helpers');
+const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
 const {schemaListEntry} = require('../utils/schema.js');
 
-router.post('/add/list-entry', async (req, res) => {
+router.post('/add/list-entry', async (req, res) => {  
+  const listEntryResults = await validatedEntries(req.body, schemaListEntry);
+  const cleanedListEntries = listEntryResults.entries;
+  const groupErrors = listEntryResults.errors;
 
-  const reqBody = Array.isArray(req.body) ? req.body : [req.body];
-  const grammar = reqBody.length == 1 ? 'List Entry' : 'List Entries';
-  
-  let cleanedListEntries = [];
-  let groupErrors = [];
-
-  // VALIDATE FIRST WITHOUT THIS VALIDATEASYNC WILL FAIL ON ALL OF THEM WHICH IS NOT WHAT WE WANT
-  // INITIAL DATA VALIDATION
-  for (const value of reqBody) {
-    try {
-      const tempListEntry = await schemaListEntry.validateAsync(value, {stripUnknown: true});
-      cleanedListEntries.push(tempListEntry);
-    } 
-    catch (err) {
-      groupErrors.push(err.details[0].message + " - " + value.listID);
-    }
-  }
+  const grammar = req.body.length == 1 ? 'List Entry' : 'List Entries';
 
   if (cleanedListEntries.length == 0) {
     log('No ' + grammar + ' have been added');

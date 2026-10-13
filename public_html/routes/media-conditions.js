@@ -3,27 +3,15 @@ const express = require('express');
 const pool = require('../config/db');
 const router = express.Router();
 
-const {returnAddJSON, log} = require('../utils/helpers');
+const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
 const {schemaMediaCondition} = require('../utils/schema.js');
 
 router.post('/add/media-condition', async (req, res) => {
+  const mediaConditionResults = await validatedEntries(req.body, schemaMediaCondition);
+  const cleanMediaConditions = mediaConditionResults.entries;
+  const groupErrors = mediaConditionResults.errors;
 
-  const reqBody = Array.isArray(req.body) ? req.body : [req.body];
-  const grammar = reqBody.length == 1 ? 'Media Condition' : 'Media Conditions';
-
-  let cleanMediaConditions = [];
-  let groupErrors = [];
-  // VALIDATE FIRST WITHOUT THIS VALIDATEASYNC WILL FAIL ON ALL OF THEM WHICH IS NOT WHAT WE WANT
-  // INITIAL DATA VALIDATION
-  for (const value of reqBody) {
-    try {
-      const tempMediaCondition = await schemaMediaCondition.validateAsync(value, {stripUnknown: true});
-      cleanMediaConditions.push(tempMediaCondition);
-    } 
-    catch (err) {
-      groupErrors.push(err.details[0].message + " - " + value.title);
-    }
-  }
+  const grammar = req.body.length == 1 ? 'Media Condition' : 'Media Conditions';
 
   if (cleanMediaConditions.length == 0) {
     log('No ' + grammar + ' have been added');

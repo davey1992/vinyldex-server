@@ -3,31 +3,15 @@ const express = require('express');
 const pool = require('../config/db');
 const router = express.Router();
 
-const {returnAddJSON, log} = require('../utils/helpers');
+const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
 const {schemaEntry} = require('../utils/schema.js');
 
 router.post('/add/entry', async (req, res) => {
-  //VALIDATION
-  //MAKE SURE USER IS LOGGED IN
-  //MAKE SURE JSON DATA IS VALIDATED
+  const entryResults = await validatedEntries(req.body, schemaEntry);
+  const cleanedEntries = entryResults.entries;
+  const groupErrors = entryResults.errors;
 
-  const reqBody = Array.isArray(req.body) ? req.body : [req.body];
-  const grammar = reqBody.length == 1 ? 'Entry' : 'Entries';
-
-  let cleanedEntries = [];
-  let groupErrors = [];
-
-  // VALIDATE FIRST WITHOUT THIS VALIDATEASYNC WILL FAIL ON ALL OF THEM WHICH IS NOT WHAT WE WANT
-  // INITIAL DATA VALIDATION
-  for (const value of reqBody) {
-    try {
-      const tempEntry = await schemaEntry.validateAsync(value, {stripUnknown: true});
-      cleanedEntries.push(tempEntry);
-    } 
-    catch (err) {
-      groupErrors.push(err.details[0].message + " - " + value.title);
-    }
-  }
+  const grammar = req.body.length == 1 ? 'Entry' : 'Entries';
 
   if (cleanedEntries.length == 0) {
     log('No ' + grammar + ' have been added');
@@ -42,7 +26,6 @@ router.post('/add/entry', async (req, res) => {
   }
 
   for (const cleanedEntry of cleanedEntries) {
-
     const query = `
       INSERT INTO entries (
         user_id,
@@ -166,6 +149,24 @@ router.post('/add/entry', async (req, res) => {
   return res.status(sendUser.status).json(
     sendUser.data
   );
+});
+
+router.put('/read/entries', async (req, res) => {
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+    log('Entries must be an object');
+    return res.status(500).json({
+      success:false,
+      type: 'invalid_type',
+      message: 'Entries must be an object',
+      error: ['Invalid Entry Type']
+    });
+  }
+
+  const entryResult = await validatedEntry(req.body, schemaEntry);
+  const cleanedEntry = entryResult.entry;
+  const groupError = entryResult.error;
+
+  log(cleanedEntry);  
 });
 
 module.exports = router;

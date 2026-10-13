@@ -4,30 +4,18 @@ const bcrypt = require('bcrypt');
 const pool = require('../config/db');
 const router = express.Router();
 
-const {returnAddJSON, log} = require('../utils/helpers');
+const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
 const {schemaUser} = require('../utils/schema.js');
 
 router.post('/add/user', async (req, res) => {
-  const pepper = process.env.VINDEX_PEPPER;
-  const reqBody = Array.isArray(req.body) ? req.body : [req.body];
-  const grammar = reqBody.length == 1 ? 'User' : 'Users';
-  
-  let hashedPassword;
-  let cleanedUsers = [];
-  let groupErrors = [];
+  const userResults = await validatedEntries(req.body, schemaUser);
+  const cleanedUsers = userResults.entries;
+  const groupErrors = userResults.errors;
 
-  //VALIDATE FIRST WITHOUT THIS VALIDATEASYNC WILL FAIL ON ALL OF THEM WHICH IS NOT WHAT WE WANT
-  //INITIAL DATA VALIDATION
-  for (const value of reqBody) {
-    try {
-      const tempUser = await schemaUser.validateAsync(value, {stripUnknown: true});
-      cleanedUsers.push(tempUser);
-    } 
-    catch (err) {
-      groupErrors.push(err.details[0].message + " - " + value.displayName);
-    }
-  }
-  
+  const pepper = process.env.VINDEX_PEPPER;
+  const grammar = req.body.length == 1 ? 'User' : 'Users';
+  let hashedPassword;
+
   if (cleanedUsers.length == 0) {
     log('No users have been added');
     log(groupErrors);

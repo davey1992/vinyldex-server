@@ -3,27 +3,15 @@ const express = require('express');
 const pool = require('../config/db');
 const router = express.Router();
 
-const {returnAddJSON, log} = require('../utils/helpers');
+const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
 const {schemaGenre} = require('../utils/schema.js');
 
 router.post('/add/genre', async (req, res) => {
-  
-  const reqBody = Array.isArray(req.body) ? req.body : [req.body];
-  const grammar = reqBody.length == 1 ? 'Genre' : 'Genres';
+  const genreResults = await validatedEntries(req.body, schemaGenre);
+  const cleanedGenres = genreResults.entries;
+  const groupErrors = genreResults.errors;
 
-  let cleanedGenres = [];
-  let groupErrors = [];
-  // VALIDATE FIRST WITHOUT THIS VALIDATEASYNC WILL FAIL ON ALL OF THEM WHICH IS NOT WHAT WE WANT
-  // INITIAL DATA VALIDATION
-  for (const value of reqBody) {
-    try {
-      const tempGenres = await schemaGenre.validateAsync(value, {stripUnknown: true});
-      cleanedGenres.push(tempGenres);
-    } 
-    catch (err) {
-      groupErrors.push(err.details[0].message + " - " + value.genreName);
-    }
-  }
+  const grammar = req.body.length == 1 ? 'Genre' : 'Genres';
   
   if (cleanedGenres.length == 0) {
     log('No ' + grammar + ' have been added');

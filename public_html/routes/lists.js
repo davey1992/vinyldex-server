@@ -3,25 +3,15 @@ const express = require('express');
 const pool = require('../config/db');
 const router = express.Router();
 
-const {returnAddJSON, log} = require('../utils/helpers');
+const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
 const {schemaList} = require('../utils/schema.js');
 
 router.post('/add/list', async (req, res) => {
-  const reqBody = Array.isArray(req.body) ? req.body : [req.body];
-  const grammar = reqBody.length == 1 ? 'List' : 'Lists';
+  const listResults = await validatedEntries(req.body, schemaList);
+  const cleanedLists = listResults.entries;
+  const groupErrors = listResults.errors;
 
-  let cleanedLists = [];
-  let groupErrors = [];
-
-  for (const value of reqBody) {
-    try {
-      const tempList = await schemaList.validateAsync(value, { stripUnknown: true });
-      cleanedLists.push(tempList);
-    } 
-    catch (err) {
-      groupErrors.push(err.details[0].message + " - " + (value.name || 'unknown'));
-    }
-  }
+  const grammar = req.body.length == 1 ? 'List' : 'Lists';
   
   if (cleanedLists.length == 0) {
     log('No ' + grammar + ' have been added');

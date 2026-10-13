@@ -9,7 +9,6 @@ const PORT = process.env.PORT || 5000;
 const express = require('express');
 const {log} = require ('./utils/helpers');
 const routes = require ('./routes');
-const post_tests = require ('./post_tests');
 
 const app = express();
 
@@ -22,7 +21,10 @@ app.get('/', (req, res) => {
 app.use('/', routes);
 
 //TEST SHIZZLE
+const post_tests = require ('./post_tests');
+const read_tests = require ('./read_tests');
 app.use('/', post_tests);
+app.use('/', read_tests);
 
 app.listen(PORT, () => {
   log(`Server running on port ${PORT}`);
