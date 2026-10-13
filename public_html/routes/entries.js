@@ -151,7 +151,7 @@ router.post('/add/entry', async (req, res) => {
   );
 });
 
-router.put('/read/entries', async (req, res) => {
+router.get('/read/entries', async (req, res) => {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     log('Entries must be an object');
     return res.status(500).json({
