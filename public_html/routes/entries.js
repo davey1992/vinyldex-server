@@ -3,7 +3,7 @@ const express = require('express');
 const pool = require('../config/db');
 const router = express.Router();
 
-const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
+const {columnSanitizer, log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
 const {schemaEntry} = require('../utils/schema.js');
 
 router.post('/add/entry', async (req, res) => {
@@ -152,8 +152,7 @@ router.post('/add/entry', async (req, res) => {
 });
 
 router.post('/read/entries', async (req, res) => {
- 
-  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+  if (!req.body.search || typeof req.body.search !== 'object' || Array.isArray(req.body.search)) {
     log('Entries must be an object');
     return res.status(500).json({
       success:false,
@@ -163,19 +162,32 @@ router.post('/read/entries', async (req, res) => {
     });
   }
 
-  console.log(":)");
-
-  const entryResult = await validatedEntry(req.body, schemaEntry);
+  if (req.body.search.length === 0) {
+    log('Please include req.body.search in your JSON');
+    return res.status(500).json({
+      success:false,
+      type: 'json_error',
+      message: 'Incorrect JSON Supplied',
+      error: ['Invalid JSON Type']
+    });
+  }
+ 
+  const entryResult = await validatedEntry(req.body.search, schemaEntry);
   const cleanedEntry = entryResult.entry;
   const groupError = entryResult.error;
 
-  const query = `SELECT * FROM entries WHERE user_id = $1`;
+  let chosenColumns = "*";
+  chosenColumns = columnSanitizer(['userID', 'sleeveCondition']);
+
+
+  const query = `SELECT ${chosenColumns} FROM entries WHERE user_id = $1`;
+
 
   const values = [
       cleanedEntry.userID
   ]
 
-  console.log(values);
+  // console.log(values);
 
   try {
     const result = await pool.query(query, values);
