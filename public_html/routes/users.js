@@ -54,10 +54,10 @@ router.post('/add/user', async (req, res) => {
     `;
     
     const values = [
-      cleanedUser.displayName,
+      cleanedUser.display_name,
       cleanedUser.email,
       hashedPassword,
-      cleanedUser.accountType,
+      cleanedUser.account_type,
       cleanedUser.visibility,
       cleanedUser.state,
       cleanedUser.properties
@@ -65,14 +65,14 @@ router.post('/add/user', async (req, res) => {
 
     try {
       const result = await pool.query(query, values);
-      log("User: Created - " + cleanedUser.displayName);
+      log("User: Created - " + cleanedUser.display_name);
     } 
     catch (err) {
       //DUPLICATE CONSTRAINTS
       if (err.code === '23505') {
         if (err.constraint === 'unique_display_name') {
-          log(`Invalid displayName: (${cleanedUser.displayName}) already exists`);
-          groupErrors.push(`Invalid displayName: (${cleanedUser.displayName}) already exists`);
+          log(`Invalid display_name: (${cleanedUser.display_name}) already exists`);
+          groupErrors.push(`Invalid display_name: (${cleanedUser.display_name}) already exists`);
         }
         else if (err.constraint === 'unique_email') {
           log(`Invalid email: (${cleanedUser.email}) already exists`);

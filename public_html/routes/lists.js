@@ -49,11 +49,11 @@ router.post('/add/list', async (req, res) => {
     `;
     
     const values = [
-      cleanedList.userID,
+      cleanedList.user_id,
       cleanedList.name,
       cleanedList.description,
       cleanedList.type,
-      cleanedList.isPublic,
+      cleanedList.is_public,
       cleanedList.state,
       cleanedList.properties
     ];
@@ -67,16 +67,16 @@ router.post('/add/list', async (req, res) => {
     catch (err) {
       if (err.code === '23503') {
         if (err.constraint === 'fk_user_id') {
-          log(`Invalid userID: ${cleanedList.userID} does not exist`);
-          groupErrors.push(`Invalid userID: ${cleanedList.userID} does not exist`);
+          log(`Invalid user_id: ${cleanedList.user_id} does not exist`);
+          groupErrors.push(`Invalid user_id: ${cleanedList.user_id} does not exist`);
         } else {
           console.error('Unexpected database error:', err);
         }
       }
       else if (err.code === '23505') {
         if (err.constraint === 'unique_user_list_name') {
-          log(`Invalid userID (${cleanedList.userID}) , name (${cleanedList.name}): Duplicate list name for this user`);
-          groupErrors.push(`Invalid userID (${cleanedList.userID}) , name (${cleanedList.name}): Duplicate list name for this user`);
+          log(`Invalid user_id (${cleanedList.user_id}) , name (${cleanedList.name}): Duplicate list name for this user`);
+          groupErrors.push(`Invalid user_id (${cleanedList.user_id}) , name (${cleanedList.name}): Duplicate list name for this user`);
         } else {
           console.error('Unexpected database error:', err);
         }

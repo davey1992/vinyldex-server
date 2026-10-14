@@ -7,13 +7,13 @@ const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils
 const {schemaMediaCondition} = require('../utils/schema.js');
 
 router.post('/add/media-condition', async (req, res) => {
-  const mediaConditionResults = await validatedEntries(req.body, schemaMediaCondition);
-  const cleanMediaConditions = mediaConditionResults.entries;
-  const groupErrors = mediaConditionResults.errors;
+  const media_conditionResults = await validatedEntries(req.body, schemaMediaCondition);
+  const cleanmedia_conditions = media_conditionResults.entries;
+  const groupErrors = media_conditionResults.errors;
 
   const grammar = req.body.length == 1 ? 'Media Condition' : 'Media Conditions';
 
-  if (cleanMediaConditions.length == 0) {
+  if (cleanmedia_conditions.length == 0) {
     log('No ' + grammar + ' have been added');
     log(groupErrors);
 
@@ -25,7 +25,7 @@ router.post('/add/media-condition', async (req, res) => {
     });
   }
 
-  for (const cleanMediaCondition of cleanMediaConditions) {
+  for (const cleanmedia_condition of cleanmedia_conditions) {
     const query = `
       INSERT INTO media_conditions (
         condition,
@@ -39,19 +39,19 @@ router.post('/add/media-condition', async (req, res) => {
     `;
     
     const values = [
-      cleanMediaCondition.condition,
-      cleanMediaCondition.description,
+      cleanmedia_condition.condition,
+      cleanmedia_condition.description,
     ];
 
     try {
       const result = await pool.query(query, values);
-      log("Entry: Created - " + cleanMediaCondition.condition);
+      log("Entry: Created - " + cleanmedia_condition.condition);
     } 
     catch (err) {
       if (err.code === '23505') {
         if (err.constraint === 'unique_media_condition') {
-          log('Invalid mediaCondition: already exists');
-          groupErrors.push(`Invalid mediaCondition: (${cleanMediaCondition.condition}) already exists`);
+          log('Invalid media_condition: already exists');
+          groupErrors.push(`Invalid media_condition: (${cleanmedia_condition.condition}) already exists`);
         }
       }
       else {

@@ -41,17 +41,17 @@ router.post('/add/genre', async (req, res) => {
     `;
     
     const values = [
-      cleanedGenre.parentID,
-      cleanedGenre.genreName,
-      cleanedGenre.genreDescription
+      cleanedGenre.parent_id,
+      cleanedGenre.genre_name,
+      cleanedGenre.genre_description
     ];
 
     try {
       const result = await pool.query(query, values);
-      log("Genre: Created - " + cleanedGenre.genreName);
+      log("Genre: Created - " + cleanedGenre.genre_name);
       return res.status(201).json({ 
         success: true,
-        message: 'Genre ' + cleanedGenre.genreName + ' created in database!', 
+        message: 'Genre ' + cleanedGenre.genre_name + ' created in database!', 
         data: result.rows[0]
       });
     } 
@@ -59,8 +59,8 @@ router.post('/add/genre', async (req, res) => {
     catch (err) {
        if (err.code === '23503') {
         if (err.constraint === 'fk_genre_parent_id') {
-          log(`Invalid parentID: (${cleanedGenre.parentID}) parent genre does not exist`);
-          groupErrors.push(`Invalid parentID: (${cleanedGenre.parentID}) parent genre does not exist`);
+          log(`Invalid parent_id: (${cleanedGenre.parent_id}) parent genre does not exist`);
+          groupErrors.push(`Invalid parent_id: (${cleanedGenre.parent_id}) parent genre does not exist`);
         }
         else {
           console.error('Database insert error:', err);
@@ -68,8 +68,8 @@ router.post('/add/genre', async (req, res) => {
       }
       else if (err.code === '23505') {
         if (err.constraint === 'unique_genre_name') {
-          log(`Invalid genreName: (${cleanedGenre.genreName}) already exists`);
-          groupErrors.push(`Invalid genreName: (${cleanedGenre.genreName}) already exists`);
+          log(`Invalid genre_name: (${cleanedGenre.genre_name}) already exists`);
+          groupErrors.push(`Invalid genre_name: (${cleanedGenre.genre_name}) already exists`);
         }
         else {
           console.error('Database insert error:', err);

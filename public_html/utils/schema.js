@@ -1,26 +1,29 @@
 const joi = require('joi');
 
 const schemaEntry = joi.object({
-  parentID: joi.number().integer().allow(null)
+  parent_id: joi.number().integer().min(0).allow(null)
     .messages({
-      'number.base': 'Invalid parentID: expected number(integer) format',
-      'number.integer': 'Invalid parentID: expected an integer',
+      'number.base': 'Invalid parent_id: expected number(integer) format',
+      'number.integer': 'Invalid parent_id: expected an integer',
+      'number.min': 'Invalid parent_id: must be a positive number'
     }),
-  userID: joi.number().integer().required()
+  user_id: joi.number().integer().required()
     .messages({
-      'any.required': 'Invalid userID: is a required field',
-      'number.base': 'Invalid userID: expected number(integer) format',
-      'number.integer': 'Invalid userID: expected an integer',
+      'any.required': 'Invalid user_id: is a required field',
+      'number.base': 'Invalid user_id: expected number(integer) format',
+      'number.integer': 'Invalid user_id: expected an integer',
     }),
-  mediaCondition: joi.number().integer().allow(null)
+  media_condition: joi.number().integer().min(0).allow(null)
     .messages({
-      'number.base': 'Invalid mediaCondition: expected number(integer) format',
-      'number.integer': 'Invalid mediaCondition: expected an number',
+      'number.base': 'Invalid media_condition: expected number(integer) format',
+      'number.integer': 'Invalid media_condition: expected an integer',
+      'number.min': 'Invalid media_condition: must be a positive number'
     }),
-  sleeveCondition: joi.number().integer().allow(null)
+  sleeve_condition: joi.number().integer().min(0).allow(null)
     .messages({
-      'number.base': 'Invalid sleeveCondition: expected number(integer) format',
-      'number.integer': 'Invalid sleeveCondition: expected an integer',
+      'number.base': 'Invalid sleeve_condition: expected number(integer) format',
+      'number.integer': 'Invalid sleeve_condition: expected an integer',
+      'number.min': 'Invalid sleeve_condition: must be a positive number'
     }),
   title: joi.string().max(150).required()
     .messages({
@@ -38,80 +41,90 @@ const schemaEntry = joi.object({
       'string.max': 'Invalid location: limit of 150 characters',
       'string.base': 'Invalid location: expected string format'
     }),
-  itemRef: joi.string().max(150).allow(null)
+  item_ref: joi.string().max(150).allow(null)
     .messages({
-      'string.base': 'Invalid itemRef: expected string format',
-      'string.max': 'Invalid itemRef: limit of 150 characters'
+      'string.base': 'Invalid item_ref: expected string format',
+      'string.max': 'Invalid item_ref: limit of 150 characters'
     }),
-  personalRating: joi.number().integer().max(10).allow(null)
+  personal_rating: joi.number().integer().min(0).max(10).allow(null)
     .messages({
-      'number.base': 'Invalid personalRating: expected number(integer)',
-      'number.max': 'Invalid personalRating: rating can not exceed 10'
+      'number.base': 'Invalid personal_rating: expected number(integer)',
+      'number.integer': 'Invalid personal_rating: expected an integer',
+      'number.min': 'Invalid personal_rating: rating cannot be negative',
+      'number.max': 'Invalid personal_rating: rating can not exceed 10'
     }),
-  bpm: joi.number().integer().max(9999).allow(null)
+  bpm: joi.number().integer().min(0).max(9999).allow(null)
     .messages({
       'number.base': 'Invalid bpm: expected number(integer) format',
       'number.integer': 'Invalid bpm: expected an integer',
+      'number.min': 'Invalid bpm: bpm cannot be negative',
       'number.max': 'Invalid bpm: number must not exceed 9999'
     }),
-  spinSpeed: joi.number().integer().max(999).allow(null)
+  spin_speed: joi.number().integer().min(0).max(999).allow(null)
     .messages({
-      'number.base': 'Invalid spinSpeed: expected number(integer) format',
-      'number.integer': 'Invalid spinSpeed: expected an integer',
-      'number.max': 'Invalid spinSpeed: number must not exceed 999'
+      'number.base': 'Invalid spin_speed: expected number(integer) format',
+      'number.integer': 'Invalid spin_speed: expected an integer',
+      'number.min': 'Invalid spin_speed: spin speed cannot be negative',
+      'number.max': 'Invalid spin_speed: number must not exceed 999'
     }),
-  artWork: joi.string().max(500).allow(null)
+  art_work: joi.string().max(500).allow(null)
     .messages({
-      'string.base': 'Invalid artWork: expected string format',
-      'string.max': 'Invalid artWork: limit of 500 characters'
+      'string.base': 'Invalid art_work: expected string format',
+      'string.max': 'Invalid art_work: limit of 500 characters'
     }),
-  mediaFormat: joi.number().max(99).allow(null)
+  media_format: joi.number().integer().min(0).max(99).allow(null)
     .messages({
-      'number.base': 'Invalid mediaFormat: expected number format',
-      'number.max': 'Invalid mediaFormat: number cannot exceed 99'
+      'number.base': 'Invalid media_format: expected number format',
+      'number.integer': 'Invalid media_format: expected an integer',
+      'number.max': 'Invalid media_format: number cannot exceed 99'
     }),
-  camelotCode: joi.string().max(10).allow(null)
+  camelot_code: joi.string().max(10).allow(null)
     .messages({
-      'string.base': 'Invalid camelotCode: expected string format',
-      'string.max': 'Invalid camelotCode: limit of 10 characters'
+      'string.base': 'Invalid camelot_code: expected string format',
+      'string.max': 'Invalid camelot_code: limit of 10 characters'
     }),
-  internalDuplicate: joi.number().allow(null)
+  internal_duplicate: joi.number().integer().min(0).allow(null)
     .messages({
-      'number.base': 'Invalid internalDuplicate: expected number format'
+      'number.base': 'Invalid internal_duplicate: expected number format',
+      'number.integer': 'Invalid internal_duplicate: expected an integer'
     }),
-  labelName: joi.string().max(150).allow(null)
+  label_name: joi.string().max(150).allow(null)
     .messages({
-      'string.base': 'Invalid labelName: expected string format',
-      'string.max': 'Invalid labelName: limit of 150 characters'
+      'string.base': 'Invalid label_name: expected string format',
+      'string.max': 'Invalid label_name: limit of 150 characters'
     }),
-  countryCode: joi.string().max(3).allow(null)
+  country_code: joi.string().max(3).allow(null)
     .messages({
-      'string.base': 'Invalid countryCode: expected string format',
-      'string.max': 'Invalid countryCode: limit of 3 characters'
+      'string.base': 'Invalid country_code: expected string format',
+      'string.max': 'Invalid country_code: limit of 3 characters'
     }),
-  purchasePrice: joi.number().precision(2).allow(null)
+  purchase_price: joi.number().min(0).precision(2).allow(null)
     .messages({
-      'number.base': 'Invalid purchasePrice: expected number format',
-      'number.precision': 'Invalid purchasePrice: can have up to 2 decimal places'
+      'number.base': 'Invalid purchase_price: expected number format',
+      'number.min': 'Invalid purchase_price: price cannot be negative',
+      'number.precision': 'Invalid purchase_price: can have up to 2 decimal places'
     }),
-  releaseYear: joi.number().integer().allow(null)
+  release_year: joi.number().integer().min(1900).max(2100).allow(null)
     .messages({
-      'number.base': 'Invalid releaseYear: expected number(integer) format',
-      'number.integer': 'Invalid releaseYear: expected an integer'
+      'number.base': 'Invalid release_year: expected number(integer) format',
+      'number.integer': 'Invalid release_year: expected an integer',
+      'number.min': 'Invalid release_year: year must be 1900 or later',
+      'number.max': 'Invalid release_year: year cannot exceed 2100'
     }),
   notes: joi.string().max(500).allow(null)
     .messages({
       'string.base': 'Invalid notes: expected string format',
       'string.max': 'Invalid notes: limit of 500 characters'
     }),
-  discogsReleaseID: joi.number().allow(null)
+  discogs_release_id: joi.number().integer().min(0).allow(null)
     .messages({
-      'number.base': 'Invalid discogsReleaseID: expected number format'
+      'number.base': 'Invalid discogs_release_id: expected number format',
+      'number.integer': 'Invalid discogs_release_id: expected an integer'
     }),
-  catalogNumber: joi.string().max(50).allow(null)
+  catalog_number: joi.string().max(50).allow(null)
     .messages({
-      'string.base': 'Invalid catalogNumber: expected string format',
-      'string.max': 'Invalid catalogNumber: limit of 50 characters'
+      'string.base': 'Invalid catalog_number: expected string format',
+      'string.max': 'Invalid catalog_number: limit of 50 characters'
     }),
   properties: joi.object().allow(null).default({})
     .messages({
@@ -120,65 +133,65 @@ const schemaEntry = joi.object({
 });
 
 const schemaEntryGenre = joi.object({
-  entryID: joi.number().integer().required()
+  entry_id: joi.number().integer().required()
     .messages({
-      'any.required': 'Invalid entryID: is a required field',
-      'number.base': 'Invalid entryID: expected number format',
-      'number.integer': 'Invalid entryID: expected whole number'
+      'any.required': 'Invalid entry_id: is a required field',
+      'number.base': 'Invalid entry_id: expected number format',
+      'number.integer': 'Invalid entry_id: expected whole number'
     }),
-  genreID: joi.number().integer().required()
+  genre_id: joi.number().integer().required()
     .messages({
-      'any.required': 'Invalid genreID: is a required field',
-      'number.base': 'Invalid genreID: expected number format',
-      'number.integer': 'Invalid genreID: expected whole number'
+      'any.required': 'Invalid genre_id: is a required field',
+      'number.base': 'Invalid genre_id: expected number format',
+      'number.integer': 'Invalid genre_id: expected whole number'
     })
 });
 
 const schemaGenre = joi.object({
-  parentID: joi.number().integer().allow(null)
+  parent_id: joi.number().integer().allow(null)
     .messages({
-      'number.base': 'Invalid parentID: expected number format',
-      'number.integer': 'Invalid parentID: expected whole number'
+      'number.base': 'Invalid parent_id: expected number format',
+      'number.integer': 'Invalid parent_id: expected whole number'
     }),
-  genreName: joi.string().max(150).required()
+  genre_name: joi.string().max(150).required()
     .messages({
-      'any.required': 'Invalid genreName: is a required field',
-      'string.base': 'Invalid genreName: expected string format',
-      'string.max': 'Invalid genreName: limit of 150 characters'
+      'any.required': 'Invalid genre_name: is a required field',
+      'string.base': 'Invalid genre_name: expected string format',
+      'string.max': 'Invalid genre_name: limit of 150 characters'
     }),
-  genreDescription: joi.string().max(500).allow(null)
+  genre_description: joi.string().max(500).allow(null)
     .messages({
-      'string.base': 'Invalid genreDescription: expected string format',
-      'string.max': 'Invalid genreDescription: limit of 500 characters'
+      'string.base': 'Invalid genre_description: expected string format',
+      'string.max': 'Invalid genre_description: limit of 500 characters'
     })
 });
 
 const schemaListEntry = joi.object({
-  listID: joi.number().integer().required()
+  list_id: joi.number().integer().required()
     .messages({
-      'any.required': 'Invalid listID: is a required field',
-      'number.base': 'Invalid listID: expected number format',
-      'number.integer': 'Invalid listID: expected whole number'
+      'any.required': 'Invalid list_id: is a required field',
+      'number.base': 'Invalid list_id: expected number format',
+      'number.integer': 'Invalid list_id: expected whole number'
     }),
-  entryID: joi.number().integer().required()
+  entry_id: joi.number().integer().required()
     .messages({
-      'any.required': 'Invalid entryID: is a required field',
-      'number.base': 'Invalid entryID: expected number format',
-      'number.integer': 'Invalid entryID: expected whole number'
+      'any.required': 'Invalid entry_id: is a required field',
+      'number.base': 'Invalid entry_id: expected number format',
+      'number.integer': 'Invalid entry_id: expected whole number'
     }),
-  positionOrder: joi.number().integer().required()
+  position_order: joi.number().integer().required()
     .messages({
-      'any.required': 'Invalid positionOrder: is a required field',
-      'number.base': 'Invalid positionOrder: expected number format',
-      'number.integer': 'Invalid positionOrder: expected whole number'
+      'any.required': 'Invalid position_order: is a required field',
+      'number.base': 'Invalid position_order: expected number format',
+      'number.integer': 'Invalid position_order: expected whole number'
     })
 });
 
 const schemaList = joi.object({
-  userID: joi.number()
+  user_id: joi.number().integer()
     .messages({
-      'number.base': 'Invalid userID: expected number',
-      'number.integer': 'Invalid userID: expected whole number',
+      'number.base': 'Invalid user_id: expected number',
+      'number.integer': 'Invalid user_id: expected whole number',
     }),
   name: joi.string().required().max(150)
     .messages({
@@ -197,9 +210,9 @@ const schemaList = joi.object({
       'number.integer': 'Invalid type: expected an integer',
       'number.max': 'Invalid type: number must not exceed 99'
     }),
-  isPublic: joi.boolean()
+  is_public: joi.boolean()
     .messages({
-      'boolean.base': 'Invalid isPublic: expected boolean format'
+      'boolean.base': 'Invalid is_public: expected boolean format'
     }),
   state: joi.object().allow(null).default({})
     .messages({
@@ -226,28 +239,28 @@ const schemaMediaCondition = joi.object({
 });
 
 const schemaRelationship = joi.object({
-  userID: joi.number().integer()
+  user_id: joi.number().integer()
     .messages({
-      'number.base': 'User ID expected number',
-      'number.integer': 'Release year must be a whole number'
+      'number.base': 'Invalid user_id: expected number format',
+      'number.integer': 'Invalid user_id: expected an integer'
     }),
-  targetUserID: joi.number().integer()
+  target_user_id: joi.number().integer()
     .messages({
-      'number.base': 'User ID expected number',
-      'number.integer': 'Release year must be a whole number'
+      'number.base': 'Invalid target_user_id: expected number format',
+      'number.integer': 'Invalid target_user_id: expected an integer'
     }),
-  relationshipTypes: joi.object().allow(null).default({})
+  relationship_types: joi.object().allow(null).default({})
     .messages({
-      'object.base': 'Properties must be a valid JSON object'
+      'object.base': 'Invalid relationship_types: expected object format'
     })
 });
 
 const schemaUser = joi.object({
-  displayName: joi.string().pattern(/^[a-zA-Z0-9 _-]+$/).trim().max(25).required()
+  display_name: joi.string().pattern(/^[a-zA-Z0-9 _-]+$/).trim().max(25).required()
     .messages({
-      'string.pattern.base': 'Invalid displayName: contains disallowed characters',
-      'string.max': 'Invalid displayName: limit of 25 characters',
-      'any.required': 'Invalid displayName: is a required field'
+      'string.pattern.base': 'Invalid display_name: contains disallowed characters',
+      'string.max': 'Invalid display_name: limit of 25 characters',
+      'any.required': 'Invalid display_name: is a required field'
     }),
   email: joi.string().email({ minDomainSegments: 2 }).required()
     .messages({
@@ -260,16 +273,16 @@ const schemaUser = joi.object({
       'string.min': 'Invalid password: minimum length of 6 characters',
       'any.required': 'Invalid password: is a required field'
     }),
-  passwordMatch: joi.string().valid(joi.ref('password')).required()
+  password_match: joi.string().valid(joi.ref('password')).required()
     .messages({
-      'any.only': 'Invalid passwordMatch: passwords do not match',
-      'any.required': 'Invalid passwordMatch: is a required field'
+      'any.only': 'Invalid password_match: passwords do not match',
+      'any.required': 'Invalid password_match: is a required field'
     }),
-  accountType: joi.number().integer().max(99).required()
+  account_type: joi.number().integer().max(99).required()
     .messages({
-      'number.base': 'Invalid accountType: expected number(integer) format',
-      'number.integer': 'Invalid accountType: expected an integer',
-      'number.max': 'Invalid accountType: number must not exceed 99'
+      'number.base': 'Invalid account_type: expected number(integer) format',
+      'number.integer': 'Invalid account_type: expected an integer',
+      'number.max': 'Invalid account_type: number must not exceed 99'
     }),
   visibility: joi.number().integer().max(99).required()
     .messages({

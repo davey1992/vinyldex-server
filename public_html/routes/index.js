@@ -6,7 +6,7 @@ const entryGenres = require ('./entry-genres');
 const genres = require ('./genres');
 const listEntries = require ('./list-entries');
 const lists = require ('./lists');
-const mediaConditions = require ('./media-conditions');
+const media_conditions = require ('./media-conditions');
 const relationships = require ('./relationships');
 const users = require ('./users');
 
@@ -15,7 +15,7 @@ router.use('/', entryGenres);
 router.use('/', genres);
 router.use('/', listEntries);
 router.use('/', lists);
-router.use('/', mediaConditions);
+router.use('/', media_conditions);
 router.use('/', relationships);
 router.use('/', users);
 

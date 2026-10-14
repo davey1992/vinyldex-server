@@ -40,14 +40,14 @@ router.post('/add/list-entry', async (req, res) => {
         RETURNING id;
       `;
       const values = [
-        cleanedListEntry.listID,
-        cleanedListEntry.entryID,
-        cleanedListEntry.positionOrder
+        cleanedListEntry.list_id,
+        cleanedListEntry.entry_id,
+        cleanedListEntry.position_order
       ];
 
       try {
         const result = await pool.query(query, values);
-        log(`Entry List: Created - ${cleanedListEntry.listID}`);
+        log(`Entry List: Created - ${cleanedListEntry.list_id}`);
       } 
       catch (err) {
         //FORIGN KEY VALIDATION ISSUES
@@ -56,12 +56,12 @@ router.post('/add/list-entry', async (req, res) => {
       
           switch (err.constraint) {
             case 'fk_list_id':
-              errorMessage = `Invalid listID: (${cleanedListEntry.listID}) list does not exist`;
-              groupErrors.push(`Invalid listID: (${cleanedListEntry.listID}) list does not exist`);
+              errorMessage = `Invalid list_id: (${cleanedListEntry.list_id}) list does not exist`;
+              groupErrors.push(`Invalid list_id: (${cleanedListEntry.list_id}) list does not exist`);
             break;
             case 'fk_entry_id':
-              errorMessage = `Invalid entryID: (${cleanedListEntry.entryID}) does not exist`;
-              groupErrors.push(`Invalid entryID: (${cleanedListEntry.entryID}) does not exist`);
+              errorMessage = `Invalid entry_id: (${cleanedListEntry.entry_id}) does not exist`;
+              groupErrors.push(`Invalid entry_id: (${cleanedListEntry.entry_id}) does not exist`);
             break;
             default: 
               console.error('Unexpected database error:', err);
@@ -69,8 +69,8 @@ router.post('/add/list-entry', async (req, res) => {
         }
         else if (err.code === '23505') {
           if(err.constraint === 'unique_list_id_entry_id') {
-              log(`Invalid list_id: (${cleanedListEntry.listID}) entryID: (${cleanedListEntry.entryID}) already exists`);
-              groupErrors.push(`Invalid list_id: (${cleanedListEntry.listID}) entryID: (${cleanedListEntry.entryID}) already exists`);
+              log(`Invalid list_id: (${cleanedListEntry.list_id}) entry_id: (${cleanedListEntry.entry_id}) already exists`);
+              groupErrors.push(`Invalid list_id: (${cleanedListEntry.list_id}) entry_id: (${cleanedListEntry.entry_id}) already exists`);
           }
           else {
              console.error('Unexpected database error:', err);

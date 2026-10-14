@@ -5,10 +5,11 @@ const DEBUG = process.env.NODE_ENV === 'dev';
 
 const columnSanitizer = (chosenColumns) => {
 
-  for (let i = 0; i < chosenColumns.length; i++) {
-    chosenColumns[i] = toSnakeCase(chosenColumns[i]);
-  }
+  // for (let i = 0; i < chosenColumns.length; i++) {
+  //   chosenColumns[i] = toSnakeCase(chosenColumns[i]);
+  // }
 
+  console.log("wooohoo");
   let columnString = chosenColumns.join(',');
 
   if (!/^[a-z0-9_,]+$/.test(columnString)) {

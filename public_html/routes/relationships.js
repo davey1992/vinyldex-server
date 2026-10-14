@@ -41,25 +41,25 @@ router.post('/add/relationship', async (req, res) => {
     `;
     
     const values = [
-      cleanRelationship.userID,
-      cleanRelationship.targetUserID,
-      cleanRelationship.relationshipTypes
+      cleanRelationship.user_id,
+      cleanRelationship.target_user_id,
+      cleanRelationship.relationship_types
     ];
 
     try {
       const result = await pool.query(query, values);
-      log("Relationship: Created - " + cleanRelationship.userID + ' - ' + cleanRelationship.targetUserID);
+      log("Relationship: Created - " + cleanRelationship.user_id + ' - ' + cleanRelationship.target_user_id);
     } 
     catch (err) {
       if (err.code === '23503') {
         switch (err.constraint) {
           case 'fk_relationship_user_id':
-            log(`Invalid userID: ${cleanRelationship.userID} does not exist`);
-            groupErrors.push(`Invalid userID: ${cleanRelationship.userID} does not exist`);
+            log(`Invalid user_id: ${cleanRelationship.user_id} does not exist`);
+            groupErrors.push(`Invalid user_id: ${cleanRelationship.user_id} does not exist`);
             break;
           case 'fk_relationship_user_target_id':
-            log(`Invalid targetUserID: ${cleanRelationship.targetUserID} does not exist`);
-            groupErrors.push(`Invalid targetUserID: ${cleanRelationship.targetUserID} does not exist`);
+            log(`Invalid target_user_id: ${cleanRelationship.target_user_id} does not exist`);
+            groupErrors.push(`Invalid target_user_id: ${cleanRelationship.target_user_id} does not exist`);
             break;
           default:
             console.error('Database insert error:', err);
@@ -67,8 +67,8 @@ router.post('/add/relationship', async (req, res) => {
       }
       else if (err.code === '23505') {
         if (err.constraint === 'unique_user_target') {
-          log(`Invalid userTarget: already assigned (${cleanRelationship.userID} -> ${cleanRelationship.targetUserID})`);
-          groupErrors.push(`Invalid userTarget: already assigned for userID ${cleanRelationship.userID}`);
+          log(`Invalid userTarget: already assigned (${cleanRelationship.user_id} -> ${cleanRelationship.target_user_id})`);
+          groupErrors.push(`Invalid userTarget: already assigned for user_id ${cleanRelationship.user_id}`);
         }
         else {
           console.error('Database insert error:', err);

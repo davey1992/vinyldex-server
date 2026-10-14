@@ -37,8 +37,8 @@ router.post('/add/entry-genre', async (req, res) => {
       RETURNING id;
     `;
     const values = [
-      cleanedEntryGenre.entryID,
-      cleanedEntryGenre.genreID
+      cleanedEntryGenre.entry_id,
+      cleanedEntryGenre.genre_id
     ];
 
     try {
@@ -50,12 +50,12 @@ router.post('/add/entry-genre', async (req, res) => {
       if (err.code === '23503') {    
         switch (err.constraint) {
           case 'fk_entry_id':
-            log(`Invalid entryID: (${cleanedEntryGenre.entryID})  does not exist`);
-            groupErrors.push(`Invalid entryID: (${cleanedEntryGenre.entryID})  does not exist`);
+            log(`Invalid entry_id: (${cleanedEntryGenre.entry_id})  does not exist`);
+            groupErrors.push(`Invalid entry_id: (${cleanedEntryGenre.entry_id})  does not exist`);
           break;
           case 'fk_genre_id':
-            log(`Invalid genreID: (${cleanedEntryGenre.genreID}) does not exist`);
-            groupErrors.push(`Invalid genreID: (${cleanedEntryGenre.genreID}) does not exist`);
+            log(`Invalid genre_id: (${cleanedEntryGenre.genre_id}) does not exist`);
+            groupErrors.push(`Invalid genre_id: (${cleanedEntryGenre.genre_id}) does not exist`);
           break;
           default:
             console.error('Database insert error:', err);
@@ -63,8 +63,8 @@ router.post('/add/entry-genre', async (req, res) => {
       }
       else if (err.code === '23505') {
         if (err.constraint === 'unique_entry_id_genre_id') {
-          log(`Invalid EntryGenre (entryID:${cleanedEntryGenre.entryID}, genreID:${cleanedEntryGenre.genreID}) already exists`);
-          groupErrors.push(`Invalid EntryGenre (entryID:${cleanedEntryGenre.entryID}, genreID:${cleanedEntryGenre.genreID}) already exists`);
+          log(`Invalid entry_genre (entry_id:${cleanedEntryGenre.entry_id}, genre_id:${cleanedEntryGenre.genre_id}) already exists`);
+          groupErrors.push(`Invalid entry_genre (entry_id:${cleanedEntryGenre.entry_id}, genre_id:${cleanedEntryGenre.genre_id}) already exists`);
         }
       }
       else {

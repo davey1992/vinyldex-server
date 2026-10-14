@@ -81,28 +81,28 @@ router.post('/add/entry', async (req, res) => {
     `;
     
     const values = [
-      cleanedEntry.userID,
-      cleanedEntry.parentID,
+      cleanedEntry.user_id,
+      cleanedEntry.parent_id,
       cleanedEntry.title,
       cleanedEntry.artist,
       cleanedEntry.location,
-      cleanedEntry.itemRef,
-      cleanedEntry.mediaCondition,
-      cleanedEntry.sleeveCondition,
-      cleanedEntry.personalRating,
+      cleanedEntry.item_ref,
+      cleanedEntry.media_condition,
+      cleanedEntry.sleeve_condition,
+      cleanedEntry.personal_rating,
       cleanedEntry.bpm,
-      cleanedEntry.spinSpeed,
-      cleanedEntry.artWork,
-      cleanedEntry.mediaFormat,
-      cleanedEntry.camelotCode,
-      cleanedEntry.internalDuplicate,
-      cleanedEntry.labelName,
-      cleanedEntry.countryCode,
-      cleanedEntry.purchasePrice,
-      cleanedEntry.releaseYear,
+      cleanedEntry.spin_speed,
+      cleanedEntry.art_work,
+      cleanedEntry.media_format,
+      cleanedEntry.camelot_code,
+      cleanedEntry.internal_duplicate,
+      cleanedEntry.label_name,
+      cleanedEntry.country_code,
+      cleanedEntry.purchase_price,
+      cleanedEntry.release_year,
       cleanedEntry.notes,
-      cleanedEntry.discogsReleaseID,
-      cleanedEntry.catalogNumber,
+      cleanedEntry.discogs_release_id,
+      cleanedEntry.catalog_number,
       cleanedEntry.properties
     ];
 
@@ -118,22 +118,22 @@ router.post('/add/entry', async (req, res) => {
     
         switch (err.constraint) {
           case 'fk_entry_user':
-            groupErrors.push(`Invalid userID: (${cleanedEntry.userID}) does not exist`);
+            groupErrors.push(`Invalid user_id: (${cleanedEntry.user_id}) does not exist`);
           break;
           case 'fk_entry_hierarchy':
-            groupErrors.push(`Invalid parentID: (${cleanedEntry.parentID}) does not exist`);
+            groupErrors.push(`Invalid parent_id: (${cleanedEntry.parent_id}) does not exist`);
           break;
           case 'fk_media_condition':
-            groupErrors.push(`Invalid mediaCondition: (${cleanedEntry.mediaCondition}) does not exist`);
+            groupErrors.push(`Invalid media_condition: (${cleanedEntry.media_condition}) does not exist`);
           break;
           case 'fk_sleeve_condition':
-            groupErrors.push(`Invalid sleeveCondition: (${cleanedEntry.sleeveCondition}) does not exist`);
+            groupErrors.push(`Invalid sleeve_condition: (${cleanedEntry.sleeve_condition}) does not exist`);
           break;
           case 'fk_user_id':
-            groupErrors.push(`Invalid userID: (${cleanedEntry.userID}) does not exist`);
+            groupErrors.push(`Invalid user_id: (${cleanedEntry.user_id}) does not exist`);
           break;
           case 'fk_media_format':
-            groupErrors.push(`Invalid mediaFormat: (${cleanedEntry.mediaFormat}) does not exist`);
+            groupErrors.push(`Invalid media_format: (${cleanedEntry.media_format}) does not exist`);
           break;
           default:
             log(err);
@@ -177,14 +177,14 @@ router.post('/read/entries', async (req, res) => {
   const groupError = entryResult.error;
 
   let chosenColumns = "*";
-  chosenColumns = columnSanitizer(['userID', 'sleeveCondition']);
+  chosenColumns = columnSanitizer(['user_id', 'sleeve_condition']);
 
 
   const query = `SELECT ${chosenColumns} FROM entries WHERE user_id = $1`;
 
 
   const values = [
-      cleanedEntry.userID
+      cleanedEntry.user_id
   ]
 
   // console.log(values);
