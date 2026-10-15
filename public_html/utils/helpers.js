@@ -1,19 +1,28 @@
 const path = require('path');
+const joi = require('joi');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const DEBUG = process.env.NODE_ENV === 'dev';
 
 
-const columnSanitizer = (chosenColumns) => {
+const columnSanitizer = (chosenColumns, schema) => {
+  if (
+    !Array.isArray(chosenColumns) || 
+    chosenColumns.length === 0
+  ) {
+    return "*";
+  }
 
-  // for (let i = 0; i < chosenColumns.length; i++) {
-  //   chosenColumns[i] = toSnakeCase(chosenColumns[i]);
-  // }
-
-  console.log("wooohoo");
-  let columnString = chosenColumns.join(',');
+  const columnString = chosenColumns.join(',');
 
   if (!/^[a-z0-9_,]+$/.test(columnString)) {
     throw new Error('Security violation: Invalid column characters detected.');
+  }
+
+  const keys = Object.keys(schema.describe().keys);
+  for (const column of chosenColumns) {
+    if(keys.includes(column) === false) {
+        throw new Error('Security violation: Invalid column');
+    }
   }
 
   return columnString;

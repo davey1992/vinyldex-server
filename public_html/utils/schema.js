@@ -1,136 +1,141 @@
 const joi = require('joi');
 
-const schemaEntry = joi.object({
-  parent_id: joi.number().integer().min(0).allow(null)
-    .messages({
-      'number.base': 'Invalid parent_id: expected number(integer) format',
-      'number.integer': 'Invalid parent_id: expected an integer',
-      'number.min': 'Invalid parent_id: must be a positive number'
-    }),
-  user_id: joi.number().integer().required()
-    .messages({
-      'any.required': 'Invalid user_id: is a required field',
-      'number.base': 'Invalid user_id: expected number(integer) format',
-      'number.integer': 'Invalid user_id: expected an integer',
-    }),
-  media_condition: joi.number().integer().min(0).allow(null)
-    .messages({
-      'number.base': 'Invalid media_condition: expected number(integer) format',
-      'number.integer': 'Invalid media_condition: expected an integer',
-      'number.min': 'Invalid media_condition: must be a positive number'
-    }),
-  sleeve_condition: joi.number().integer().min(0).allow(null)
-    .messages({
-      'number.base': 'Invalid sleeve_condition: expected number(integer) format',
-      'number.integer': 'Invalid sleeve_condition: expected an integer',
-      'number.min': 'Invalid sleeve_condition: must be a positive number'
-    }),
-  title: joi.string().max(150).required()
-    .messages({
-      'any.required': 'Invalid title: field is required',
-      'string.max': 'Invalid title: limit of 150 characters',
-      'string.base': 'Invalid title: expected string format'
-    }),
-  artist: joi.string().max(150).allow(null)
-    .messages({
-      'string.max': 'Invalid artist: limit of 150 characters',
-      'string.base': 'Invalid artist: expected string format'
-    }),
-  location: joi.string().max(150).allow(null)
-    .messages({
-      'string.max': 'Invalid location: limit of 150 characters',
-      'string.base': 'Invalid location: expected string format'
-    }),
-  item_ref: joi.string().max(150).allow(null)
-    .messages({
-      'string.base': 'Invalid item_ref: expected string format',
-      'string.max': 'Invalid item_ref: limit of 150 characters'
-    }),
-  personal_rating: joi.number().integer().min(0).max(10).allow(null)
-    .messages({
-      'number.base': 'Invalid personal_rating: expected number(integer)',
-      'number.integer': 'Invalid personal_rating: expected an integer',
-      'number.min': 'Invalid personal_rating: rating cannot be negative',
-      'number.max': 'Invalid personal_rating: rating can not exceed 10'
-    }),
-  bpm: joi.number().integer().min(0).max(9999).allow(null)
-    .messages({
-      'number.base': 'Invalid bpm: expected number(integer) format',
-      'number.integer': 'Invalid bpm: expected an integer',
-      'number.min': 'Invalid bpm: bpm cannot be negative',
-      'number.max': 'Invalid bpm: number must not exceed 9999'
-    }),
-  spin_speed: joi.number().integer().min(0).max(999).allow(null)
-    .messages({
-      'number.base': 'Invalid spin_speed: expected number(integer) format',
-      'number.integer': 'Invalid spin_speed: expected an integer',
-      'number.min': 'Invalid spin_speed: spin speed cannot be negative',
-      'number.max': 'Invalid spin_speed: number must not exceed 999'
-    }),
-  art_work: joi.string().max(500).allow(null)
-    .messages({
-      'string.base': 'Invalid art_work: expected string format',
-      'string.max': 'Invalid art_work: limit of 500 characters'
-    }),
-  media_format: joi.number().integer().min(0).max(99).allow(null)
-    .messages({
-      'number.base': 'Invalid media_format: expected number format',
-      'number.integer': 'Invalid media_format: expected an integer',
-      'number.max': 'Invalid media_format: number cannot exceed 99'
-    }),
-  camelot_code: joi.string().max(10).allow(null)
-    .messages({
-      'string.base': 'Invalid camelot_code: expected string format',
-      'string.max': 'Invalid camelot_code: limit of 10 characters'
-    }),
-  internal_duplicate: joi.number().integer().min(0).allow(null)
-    .messages({
-      'number.base': 'Invalid internal_duplicate: expected number format',
-      'number.integer': 'Invalid internal_duplicate: expected an integer'
-    }),
-  label_name: joi.string().max(150).allow(null)
-    .messages({
-      'string.base': 'Invalid label_name: expected string format',
-      'string.max': 'Invalid label_name: limit of 150 characters'
-    }),
-  country_code: joi.string().max(3).allow(null)
-    .messages({
-      'string.base': 'Invalid country_code: expected string format',
-      'string.max': 'Invalid country_code: limit of 3 characters'
-    }),
-  purchase_price: joi.number().min(0).precision(2).allow(null)
-    .messages({
-      'number.base': 'Invalid purchase_price: expected number format',
-      'number.min': 'Invalid purchase_price: price cannot be negative',
-      'number.precision': 'Invalid purchase_price: can have up to 2 decimal places'
-    }),
-  release_year: joi.number().integer().min(1900).max(2100).allow(null)
-    .messages({
-      'number.base': 'Invalid release_year: expected number(integer) format',
-      'number.integer': 'Invalid release_year: expected an integer',
-      'number.min': 'Invalid release_year: year must be 1900 or later',
-      'number.max': 'Invalid release_year: year cannot exceed 2100'
-    }),
-  notes: joi.string().max(500).allow(null)
-    .messages({
-      'string.base': 'Invalid notes: expected string format',
-      'string.max': 'Invalid notes: limit of 500 characters'
-    }),
-  discogs_release_id: joi.number().integer().min(0).allow(null)
-    .messages({
-      'number.base': 'Invalid discogs_release_id: expected number format',
-      'number.integer': 'Invalid discogs_release_id: expected an integer'
-    }),
-  catalog_number: joi.string().max(50).allow(null)
-    .messages({
-      'string.base': 'Invalid catalog_number: expected string format',
-      'string.max': 'Invalid catalog_number: limit of 50 characters'
-    }),
-  properties: joi.object().allow(null).default({})
-    .messages({
-      'object.base': 'Invalid properties: expected object format'
-    })
-});
+const schemaEntry = (allowNull = false) => {
+
+  modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
+
+  return joi.object({
+    parent_id: joi.number().integer().min(0).allow(null)
+      .messages({
+        'number.base': 'Invalid parent_id: expected number(integer) format',
+        'number.integer': 'Invalid parent_id: expected an integer',
+        'number.min': 'Invalid parent_id: must be a positive number'
+      }),
+    user_id: modifier(joi.number().integer())
+      .messages({
+        'any.required': 'Invalid user_id: is a required field',
+        'number.base': 'Invalid user_id: expected number(integer) format',
+        'number.integer': 'Invalid user_id: expected an integer',
+      }),
+    media_condition: joi.number().integer().min(0).allow(null)
+      .messages({
+        'number.base': 'Invalid media_condition: expected number(integer) format',
+        'number.integer': 'Invalid media_condition: expected an integer',
+        'number.min': 'Invalid media_condition: must be a positive number'
+      }),
+    sleeve_condition: joi.number().integer().min(0).allow(null)
+      .messages({
+        'number.base': 'Invalid sleeve_condition: expected number(integer) format',
+        'number.integer': 'Invalid sleeve_condition: expected an integer',
+        'number.min': 'Invalid sleeve_condition: must be a positive number'
+      }),
+    title:  modifier(joi.string().max(150))
+      .messages({
+        'any.required': 'Invalid title: field is required',
+        'string.max': 'Invalid title: limit of 150 characters',
+        'string.base': 'Invalid title: expected string format'
+      }),
+    artist: joi.string().max(150).allow(null)
+      .messages({
+        'string.max': 'Invalid artist: limit of 150 characters',
+        'string.base': 'Invalid artist: expected string format'
+      }),
+    location: joi.string().max(150).allow(null)
+      .messages({
+        'string.max': 'Invalid location: limit of 150 characters',
+        'string.base': 'Invalid location: expected string format'
+      }),
+    item_ref: joi.string().max(150).allow(null)
+      .messages({
+        'string.base': 'Invalid item_ref: expected string format',
+        'string.max': 'Invalid item_ref: limit of 150 characters'
+      }),
+    personal_rating: joi.number().integer().min(0).max(10).allow(null)
+      .messages({
+        'number.base': 'Invalid personal_rating: expected number(integer)',
+        'number.integer': 'Invalid personal_rating: expected an integer',
+        'number.min': 'Invalid personal_rating: rating cannot be negative',
+        'number.max': 'Invalid personal_rating: rating can not exceed 10'
+      }),
+    bpm: joi.number().integer().min(0).max(9999).allow(null)
+      .messages({
+        'number.base': 'Invalid bpm: expected number(integer) format',
+        'number.integer': 'Invalid bpm: expected an integer',
+        'number.min': 'Invalid bpm: bpm cannot be negative',
+        'number.max': 'Invalid bpm: number must not exceed 9999'
+      }),
+    spin_speed: joi.number().integer().min(0).max(999).allow(null)
+      .messages({
+        'number.base': 'Invalid spin_speed: expected number(integer) format',
+        'number.integer': 'Invalid spin_speed: expected an integer',
+        'number.min': 'Invalid spin_speed: spin speed cannot be negative',
+        'number.max': 'Invalid spin_speed: number must not exceed 999'
+      }),
+    art_work: joi.string().max(500).allow(null)
+      .messages({
+        'string.base': 'Invalid art_work: expected string format',
+        'string.max': 'Invalid art_work: limit of 500 characters'
+      }),
+    media_format: joi.number().integer().min(0).max(99).allow(null)
+      .messages({
+        'number.base': 'Invalid media_format: expected number format',
+        'number.integer': 'Invalid media_format: expected an integer',
+        'number.max': 'Invalid media_format: number cannot exceed 99'
+      }),
+    camelot_code: joi.string().max(10).allow(null)
+      .messages({
+        'string.base': 'Invalid camelot_code: expected string format',
+        'string.max': 'Invalid camelot_code: limit of 10 characters'
+      }),
+    internal_duplicate: joi.number().integer().min(0).allow(null)
+      .messages({
+        'number.base': 'Invalid internal_duplicate: expected number format',
+        'number.integer': 'Invalid internal_duplicate: expected an integer'
+      }),
+    label_name: joi.string().max(150).allow(null)
+      .messages({
+        'string.base': 'Invalid label_name: expected string format',
+        'string.max': 'Invalid label_name: limit of 150 characters'
+      }),
+    country_code: joi.string().max(3).allow(null)
+      .messages({
+        'string.base': 'Invalid country_code: expected string format',
+        'string.max': 'Invalid country_code: limit of 3 characters'
+      }),
+    purchase_price: joi.number().min(0).precision(2).allow(null)
+      .messages({
+        'number.base': 'Invalid purchase_price: expected number format',
+        'number.min': 'Invalid purchase_price: price cannot be negative',
+        'number.precision': 'Invalid purchase_price: can have up to 2 decimal places'
+      }),
+    release_year: joi.number().integer().min(1900).max(2100).allow(null)
+      .messages({
+        'number.base': 'Invalid release_year: expected number(integer) format',
+        'number.integer': 'Invalid release_year: expected an integer',
+        'number.min': 'Invalid release_year: year must be 1900 or later',
+        'number.max': 'Invalid release_year: year cannot exceed 2100'
+      }),
+    notes: joi.string().max(500).allow(null)
+      .messages({
+        'string.base': 'Invalid notes: expected string format',
+        'string.max': 'Invalid notes: limit of 500 characters'
+      }),
+    discogs_release_id: joi.number().integer().min(0).allow(null)
+      .messages({
+        'number.base': 'Invalid discogs_release_id: expected number format',
+        'number.integer': 'Invalid discogs_release_id: expected an integer'
+      }),
+    catalog_number: joi.string().max(50).allow(null)
+      .messages({
+        'string.base': 'Invalid catalog_number: expected string format',
+        'string.max': 'Invalid catalog_number: limit of 50 characters'
+      }),
+    properties: joi.object().allow(null)
+      .messages({
+        'object.base': 'Invalid properties: expected object format'
+      })
+  })
+};
 
 const schemaEntryGenre = joi.object({
   entry_id: joi.number().integer().required()

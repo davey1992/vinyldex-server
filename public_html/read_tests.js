@@ -4,35 +4,38 @@ const router = express.Router();
 
 router.get('/read/entries', (req, res) => {
   const customJSON = JSON.stringify({
-    "columns": {
-      
-    },
+    "columns": [
+      "user_id",
+      "title",
+      "artist",
+    ],
     "search": {
       "user_id": 1,
-      "parent_id": null,
-      "title": "Let Your Mind Be Free",
-      "artist": "Supreme & UFO",
-      "location": "Box A - Row 2",
-      "item_ref": "KFR-012",
-      "media_condition": 2,
-      "sleeve_condition": 2,
-      "personal_rating": 10,
-      "bpm": 172,
-      "spin_speed": "33",
-      "art_work": "default_cover.jpg",
-      "media_format": 1,
-      "camelot_code": "9A",
-      "internal_duplicate": 0,
-      "label_name": "Kniteforce Records",
-      "country_code": "UK",
-      "purchase_price": 18.50,
-      "release_year": 1995,
-      "notes": "Absolute masterclass in breakbeat hardcore",
-      "discogs_release_id": 234567,
-      "catalog_number": "KF 012",
-      "properties": null
     }
   });
+  // "user_id": 1,
+  //     "parent_id": null,
+  //     "title": "Let Your Mind Be Free",
+  //     "artist": "Supreme & UFO",
+  //     "location": "Box A - Row 2",
+  //     "item_ref": "KFR-012",
+  //     "media_condition": 2,
+  //     "sleeve_condition": 2,
+  //     "personal_rating": 10,
+  //     "bpm": 172,
+  //     "spin_speed": "33",
+  //     "art_work": "default_cover.jpg",
+  //     "media_format": 1,
+  //     "camelot_code": "9A",
+  //     "internal_duplicate": 0,
+  //     "label_name": "Kniteforce Records",
+  //     "country_code": "UK",
+  //     "purchase_price": 18.50,
+  //     "release_year": 1995,
+  //     "notes": "Absolute masterclass in breakbeat hardcore",
+  //     "discogs_release_id": 234567,
+  //     "catalog_number": "KF 012",
+  //     "properties": null
 
 
   res.send(`
