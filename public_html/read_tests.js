@@ -4,14 +4,25 @@ const router = express.Router();
 
 router.get('/read/entries', (req, res) => {
   const customJSON = JSON.stringify({
-    "columns": [
+    columns: [
       "user_id",
       "title",
       "artist",
+      "bpm"
     ],
-    "search": {
-      "user_id": 1,
-    }
+    search: [
+      {
+        field: "title",
+        value: "The Way",
+        operator : "LIKE",
+        caseSensitive: true
+      },
+      {
+        field: "user_id",
+        value: 1,
+        operator : "="
+      },
+    ]
   });
   // "user_id": 1,
   //     "parent_id": null,

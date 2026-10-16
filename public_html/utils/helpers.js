@@ -107,21 +107,35 @@ const validatedEntries = async(json, schema) => {
   }
 }
 
-const validatedEntry = async (json, schema) => {
+const validatedSearch = async (json, schema) => {
+
+  json = Array.isArray(json) ? json : [json];
+  let search = [];
   let entry;
-  let error = '';
 
-  try {
-    entry = await schema.validateAsync(json, { stripUnknown: true });
-  } 
-  catch (err) {
-    error = err.details[0].message;
-  }   
+  for (let jsonItem of json) {
+    let tempBuilder = {}; 
+    tempBuilder[jsonItem.field] = jsonItem.value;
 
-  return {
-    entry,
-    error
-  };
+    try {
+      entry = await schema.validateAsync(tempBuilder, { stripUnknown: true });
+      
+      const fieldKey = Object.keys(entry)[0];
+
+      search.push({
+          field: fieldKey,
+          value: entry[fieldKey],
+          operator: jsonItem.operator ?? '=',
+          caseSensitive: jsonItem.caseSensitive ?? true
+      });
+    } 
+    catch (err) {
+      error = err.details[0].message;
+    }
+  }
+  
+
+  return search;
 };
 
 
@@ -131,5 +145,5 @@ module.exports = {
   returnAddJSON,
   toSnakeCase,
   validatedEntries,
-  validatedEntry
+  validatedSearch
 };

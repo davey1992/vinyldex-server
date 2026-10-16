@@ -3,7 +3,7 @@ const express = require('express');
 const pool = require('../config/db');
 const router = express.Router();
 
-const {columnSanitizer, log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
+const {columnSanitizer, log, returnAddJSON, validatedEntries, validatedSearch} = require('../utils/helpers');
 const {schemaEntry} = require('../utils/schema.js');
 
 router.post('/add/entry', async (req, res) => {
@@ -152,10 +152,10 @@ router.post('/add/entry', async (req, res) => {
 });
 
 
-// const groupError = entryResult.error;
+
 router.post('/read/entries', async (req, res) => {
-  if (!req.body.search || typeof req.body.search !== 'object' || Array.isArray(req.body.search)) {
-    log('Entries must be an object');
+  if (!req.body.search) {
+    log('Entries must exist');
     return res.status(500).json({
       success:false,
       type: 'invalid_type',
@@ -173,26 +173,53 @@ router.post('/read/entries', async (req, res) => {
       error: ['Invalid JSON Type']
     });
   }
- 
+
+  
   const chosenColumns = columnSanitizer(req.body.columns, schemaEntry());
-  const entryResult = await validatedEntry(req.body.search, schemaEntry(true));
-  const cleanedEntry = entryResult.entry;
+  const entryResults = await validatedSearch(req.body.search, schemaEntry(true));
   const values = [];
 
   let counter = 0;
   let searchColumns = "";
 
+ 
   try {
-    Object.entries(cleanedEntry).forEach(([key, value]) => {
-      counter++;
-      values.push(value);
-      searchColumns += ` AND "${key}" = $${counter}`;
-    });
+    for (const entryResult of entryResults) {
+      const acceptedOperators = ["=","!=","<",">","LIKE"];
+      
+      entryResult.operator = entryResult.operator.toUpperCase();
+      let caseSensitiveString = `${entryResult.field}`;
+      let valueString = "";
+      let queryOperator = "=";
+    
+      valueString = entryResult.value;
+
+      if (entryResult.caseSensitive) {
+          if (typeof entryResult.value === "string") {
+            caseSensitiveString = `LOWER(${entryResult.field})`;
+            valueString = entryResult.value.toLowerCase();
+          }
+      }
+
+      if (entryResult.operator === "LIKE") {
+        valueString = `%${valueString}%`;
+      }
+
+      if (acceptedOperators.includes(entryResult.operator)) {
+        counter++;
+        values.push(valueString);
+
+        queryOperator = entryResult.operator;
+        searchColumns += ` AND ${caseSensitiveString} ${queryOperator} $${counter}`;
+        
+      }
+    }
 
     const query = `SELECT ${chosenColumns} FROM entries WHERE true ${searchColumns}`;
     const result = await pool.query(query, values);
     log(result.rows);
   } 
+
   catch (err) {
     log(`[Security/Validation Warning]: ${err.message}`);
     return res.status(400).json({
