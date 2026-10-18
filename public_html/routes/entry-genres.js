@@ -7,7 +7,7 @@ const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils
 const {schemaEntryGenre} = require('../utils/schema.js');
 
 router.post('/add/entry-genre', async (req, res) => {
-  const entryGenresResults = await validatedEntries(req.body, schemaEntryGenre);
+  const entryGenresResults = await validatedEntries(req.body, schemaEntryGenre());
   const cleanedEntryGenres = entryGenresResults.entries;
   const groupErrors = entryGenresResults.errors;
 

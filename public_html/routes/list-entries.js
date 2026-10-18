@@ -7,7 +7,7 @@ const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils
 const {schemaListEntry} = require('../utils/schema.js');
 
 router.post('/add/list-entry', async (req, res) => {  
-  const listEntryResults = await validatedEntries(req.body, schemaListEntry);
+  const listEntryResults = await validatedEntries(req.body, schemaListEntry());
   const cleanedListEntries = listEntryResults.entries;
   const groupErrors = listEntryResults.errors;
 

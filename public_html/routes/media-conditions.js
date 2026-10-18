@@ -7,7 +7,7 @@ const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils
 const {schemaMediaCondition} = require('../utils/schema.js');
 
 router.post('/add/media-condition', async (req, res) => {
-  const media_conditionResults = await validatedEntries(req.body, schemaMediaCondition);
+  const media_conditionResults = await validatedEntries(req.body, schemaMediaCondition());
   const cleanmedia_conditions = media_conditionResults.entries;
   const groupErrors = media_conditionResults.errors;
 

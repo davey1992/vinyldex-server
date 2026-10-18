@@ -2,7 +2,7 @@ const joi = require('joi');
 
 const schemaEntry = (allowNull = false) => {
 
-  modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
+  const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
 
   return joi.object({
     parent_id: joi.number().integer().min(0).allow(null)
@@ -137,173 +137,206 @@ const schemaEntry = (allowNull = false) => {
   })
 };
 
-const schemaEntryGenre = joi.object({
-  entry_id: joi.number().integer().required()
-    .messages({
-      'any.required': 'Invalid entry_id: is a required field',
-      'number.base': 'Invalid entry_id: expected number format',
-      'number.integer': 'Invalid entry_id: expected whole number'
-    }),
-  genre_id: joi.number().integer().required()
-    .messages({
-      'any.required': 'Invalid genre_id: is a required field',
-      'number.base': 'Invalid genre_id: expected number format',
-      'number.integer': 'Invalid genre_id: expected whole number'
-    })
-});
+const schemaEntryGenre = (allowNull = false) => {
+  const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
 
-const schemaGenre = joi.object({
-  parent_id: joi.number().integer().allow(null)
-    .messages({
-      'number.base': 'Invalid parent_id: expected number format',
-      'number.integer': 'Invalid parent_id: expected whole number'
-    }),
-  genre_name: joi.string().max(150).required()
-    .messages({
-      'any.required': 'Invalid genre_name: is a required field',
-      'string.base': 'Invalid genre_name: expected string format',
-      'string.max': 'Invalid genre_name: limit of 150 characters'
-    }),
-  genre_description: joi.string().max(500).allow(null)
-    .messages({
-      'string.base': 'Invalid genre_description: expected string format',
-      'string.max': 'Invalid genre_description: limit of 500 characters'
-    })
-});
+  return joi.object({
+    entry_id: modifier(joi.number().integer()
+      .messages({
+        'any.required': 'Invalid entry_id: is a required field',
+        'number.base': 'Invalid entry_id: expected number format',
+        'number.integer': 'Invalid entry_id: expected whole number'
+      })
+    ),
+    genre_id: modifier(joi.number().integer()
+      .messages({
+        'any.required': 'Invalid genre_id: is a required field',
+        'number.base': 'Invalid genre_id: expected number format',
+        'number.integer': 'Invalid genre_id: expected whole number'
+      })
+    )
+  });
+}
 
-const schemaListEntry = joi.object({
-  list_id: joi.number().integer().required()
-    .messages({
-      'any.required': 'Invalid list_id: is a required field',
-      'number.base': 'Invalid list_id: expected number format',
-      'number.integer': 'Invalid list_id: expected whole number'
-    }),
-  entry_id: joi.number().integer().required()
-    .messages({
-      'any.required': 'Invalid entry_id: is a required field',
-      'number.base': 'Invalid entry_id: expected number format',
-      'number.integer': 'Invalid entry_id: expected whole number'
-    }),
-  position_order: joi.number().integer().required()
-    .messages({
-      'any.required': 'Invalid position_order: is a required field',
-      'number.base': 'Invalid position_order: expected number format',
-      'number.integer': 'Invalid position_order: expected whole number'
-    })
-});
+const schemaGenre = (allowNull = false) => {
+  const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
+  return joi.object({
+    parent_id: joi.number().integer().allow(null)
+      .messages({
+        'number.base': 'Invalid parent_id: expected number format',
+        'number.integer': 'Invalid parent_id: expected whole number'
+      }),
+    genre_name: modifier(joi.string().max(150)
+      .messages({
+        'any.required': 'Invalid genre_name: is a required field',
+        'string.base': 'Invalid genre_name: expected string format',
+        'string.max': 'Invalid genre_name: limit of 150 characters'
+      })
+    ),
+    genre_description: joi.string().max(500).allow(null)
+      .messages({
+        'string.base': 'Invalid genre_description: expected string format',
+        'string.max': 'Invalid genre_description: limit of 500 characters'
+      })
+  });
+}
 
-const schemaList = joi.object({
-  user_id: joi.number().integer()
-    .messages({
-      'number.base': 'Invalid user_id: expected number',
-      'number.integer': 'Invalid user_id: expected whole number',
-    }),
-  name: joi.string().required().max(150)
-    .messages({
-      'any.required': 'Invalid name: is a required field',
-      'string.base': 'Invalid name: expected string format',
-      'string.max': 'Invalid name: limit of 150 characters'
-    }),
-  description: joi.string().max(500)
-    .messages({
-      'string.base': 'Invalid description: expected string format',
-      'string.max': 'Invalid description: limit of 500 characters'
-    }),
-  type: joi.number().integer().max(99)
-    .messages({
-      'number.base': 'Invalid type: expected number format',
-      'number.integer': 'Invalid type: expected an integer',
-      'number.max': 'Invalid type: number must not exceed 99'
-    }),
-  is_public: joi.boolean()
-    .messages({
-      'boolean.base': 'Invalid is_public: expected boolean format'
-    }),
-  state: joi.object().allow(null).default({})
-    .messages({
-      'object.base': 'Invalid state: expected object format'
-    }),
-  properties: joi.object().allow(null).default({})
-    .messages({
-      'object.base': 'Invalid properties: expected object format'
-    })
-});
+const schemaListEntry = (allowNull = false) => {
+  const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
+  
+  return joi.object({
+    list_id: modifier(joi.number().integer()
+      .messages({
+        'any.required': 'Invalid list_id: is a required field',
+        'number.base': 'Invalid list_id: expected number format',
+        'number.integer': 'Invalid list_id: expected whole number'
+      })
+    ),
+    entry_id: modifier(joi.number().integer()
+      .messages({
+        'any.required': 'Invalid entry_id: is a required field',
+        'number.base': 'Invalid entry_id: expected number format',
+        'number.integer': 'Invalid entry_id: expected whole number'
+      })
+    ),
+    position_order: modifier(joi.number().integer()
+      .messages({
+        'any.required': 'Invalid position_order: is a required field',
+        'number.base': 'Invalid position_order: expected number format',
+        'number.integer': 'Invalid position_order: expected whole number'
+      })
+    )
+  });
+}
+const schemaList = (allowNull = false) => {
 
-const schemaMediaCondition = joi.object({
-  condition: joi.string().max(20).required()
-    .messages({
-      'any.required': 'Invalid condition: is a required field',
-      'string.base': 'Invalid condition: expected string format',
-      'string.max': 'Invalid condition: limit of 20 characters'
-    }),
-  description: joi.string().max(500).allow(null)
-    .messages({
-      'string.base': 'Invalid description: expected string format',
-      'string.max': 'Invalid description: limit of 500 characters'
-    })
-});
+  // const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
+  return joi.object({
+    user_id: joi.number().integer()
+      .messages({
+        'number.base': 'Invalid user_id: expected number',
+        'number.integer': 'Invalid user_id: expected whole number',
+      }),
+    name: joi.string().required().max(150)
+      .messages({
+        'any.required': 'Invalid name: is a required field',
+        'string.base': 'Invalid name: expected string format',
+        'string.max': 'Invalid name: limit of 150 characters'
+      }),
+    description: joi.string().max(500)
+      .messages({
+        'string.base': 'Invalid description: expected string format',
+        'string.max': 'Invalid description: limit of 500 characters'
+      }),
+    type: joi.number().integer().max(99)
+      .messages({
+        'number.base': 'Invalid type: expected number format',
+        'number.integer': 'Invalid type: expected an integer',
+        'number.max': 'Invalid type: number must not exceed 99'
+      }),
+    is_public: joi.boolean()
+      .messages({
+        'boolean.base': 'Invalid is_public: expected boolean format'
+      }),
+    state: joi.object().allow(null).default({})
+      .messages({
+        'object.base': 'Invalid state: expected object format'
+      }),
+    properties: joi.object().allow(null).default({})
+      .messages({
+        'object.base': 'Invalid properties: expected object format'
+      })
+  });
+}
 
-const schemaRelationship = joi.object({
-  user_id: joi.number().integer()
-    .messages({
-      'number.base': 'Invalid user_id: expected number format',
-      'number.integer': 'Invalid user_id: expected an integer'
-    }),
-  target_user_id: joi.number().integer()
-    .messages({
-      'number.base': 'Invalid target_user_id: expected number format',
-      'number.integer': 'Invalid target_user_id: expected an integer'
-    }),
-  relationship_types: joi.object().allow(null).default({})
-    .messages({
-      'object.base': 'Invalid relationship_types: expected object format'
-    })
-});
+const schemaMediaCondition = (allowNull = false) => {
+  const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
+  return joi.object({
+    condition: modifier(joi.string().max(20)
+      .messages({
+        'any.required': 'Invalid condition: is a required field',
+        'string.base': 'Invalid condition: expected string format',
+        'string.max': 'Invalid condition: limit of 20 characters'
+      })
+    ),
+    description: modifier(joi.string().max(500).allow(null)
+      .messages({
+        'string.base': 'Invalid description: expected string format',
+        'string.max': 'Invalid description: limit of 500 characters'
+      })
+    )
+  });
+}
 
-const schemaUser = joi.object({
-  display_name: joi.string().pattern(/^[a-zA-Z0-9 _-]+$/).trim().max(25).required()
-    .messages({
-      'string.pattern.base': 'Invalid display_name: contains disallowed characters',
-      'string.max': 'Invalid display_name: limit of 25 characters',
-      'any.required': 'Invalid display_name: is a required field'
-    }),
-  email: joi.string().email({ minDomainSegments: 2 }).required()
-    .messages({
-      'string.email': 'Invalid email: expected a valid email address',
-      'any.required': 'Invalid email: is a required field'
-    }),
-  password: joi.string().pattern(/^(?=.*[a-zA-Z])(?=.*\d)/).min(6).required()
-    .messages({
-      'string.pattern.base': 'Invalid password: must contain at least one letter and one number',
-      'string.min': 'Invalid password: minimum length of 6 characters',
-      'any.required': 'Invalid password: is a required field'
-    }),
-  password_match: joi.string().valid(joi.ref('password')).required()
-    .messages({
-      'any.only': 'Invalid password_match: passwords do not match',
-      'any.required': 'Invalid password_match: is a required field'
-    }),
-  account_type: joi.number().integer().max(99).required()
-    .messages({
-      'number.base': 'Invalid account_type: expected number(integer) format',
-      'number.integer': 'Invalid account_type: expected an integer',
-      'number.max': 'Invalid account_type: number must not exceed 99'
-    }),
-  visibility: joi.number().integer().max(99).required()
-    .messages({
-      'number.base': 'Invalid visibility: expected number(integer) format',
-      'number.integer': 'Invalid visibility: expected an integer',
-      'number.max': 'Invalid visibility: number must not exceed 99'
-    }),
-  state: joi.object().allow(null).default({})
-    .messages({
-      'object.base': 'Invalid state: expected object format'
-    }),
-  properties: joi.object().allow(null).default({})
-    .messages({
-      'object.base': 'Invalid properties: expected object format'
-  })
-});
+const schemaRelationship = (allowNull = false) => {
+  return joi.object({
+    user_id: joi.number().integer()
+      .messages({
+        'number.base': 'Invalid user_id: expected number format',
+        'number.integer': 'Invalid user_id: expected an integer'
+      }),
+    target_user_id: joi.number().integer()
+      .messages({
+        'number.base': 'Invalid target_user_id: expected number format',
+        'number.integer': 'Invalid target_user_id: expected an integer'
+      }),
+    relationship_types: joi.object().allow(null).default({})
+      .messages({
+        'object.base': 'Invalid relationship_types: expected object format'
+      })
+  });
+}
+const schemaUser = (allowNull = false) => {
+  const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
+  return joi.object({
+    display_name: modifier(joi.string().pattern(/^[a-zA-Z0-9 _-]+$/).trim().max(25)
+      .messages({
+        'string.pattern.base': 'Invalid display_name: contains disallowed characters',
+        'string.max': 'Invalid display_name: limit of 25 characters',
+        'any.required': 'Invalid display_name: is a required field'
+      })
+    ),
+    email: modifier(joi.string().email({ minDomainSegments: 2 })
+      .messages({
+        'string.email': 'Invalid email: expected a valid email address',
+        'any.required': 'Invalid email: is a required field'
+      })
+    ),
+    password: modifier(joi.string().pattern(/^(?=.*[a-zA-Z])(?=.*\d)/).min(6)
+      .messages({
+        'string.pattern.base': 'Invalid password: must contain at least one letter and one number',
+        'string.min': 'Invalid password: minimum length of 6 characters',
+        'any.required': 'Invalid password: is a required field'
+      })
+    ),
+    password_match: (joi.string().valid(joi.ref('password'))
+      .messages({
+        'any.only': 'Invalid password_match: passwords do not match',
+        'any.required': 'Invalid password_match: is a required field'
+      })
+    ),
+    account_type: joi.number().integer().max(99).required()
+      .messages({
+        'number.base': 'Invalid account_type: expected number(integer) format',
+        'number.integer': 'Invalid account_type: expected an integer',
+        'number.max': 'Invalid account_type: number must not exceed 99'
+      }),
+    visibility: joi.number().integer().max(99).required()
+      .messages({
+        'number.base': 'Invalid visibility: expected number(integer) format',
+        'number.integer': 'Invalid visibility: expected an integer',
+        'number.max': 'Invalid visibility: number must not exceed 99'
+      }),
+    state: joi.object().allow(null).default({})
+      .messages({
+        'object.base': 'Invalid state: expected object format'
+      }),
+    properties: joi.object().allow(null).default({})
+      .messages({
+        'object.base': 'Invalid properties: expected object format'
+    })
+  });
+}
 
 module.exports = {
     schemaEntry,

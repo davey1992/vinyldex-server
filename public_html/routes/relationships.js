@@ -7,7 +7,7 @@ const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils
 const {schemaRelationship} = require('../utils/schema.js');
 
 router.post('/add/relationship', async (req, res) => {
-  const relationshipResults = await validatedEntries(req.body, schemaRelationship);
+  const relationshipResults = await validatedEntries(req.body, schemaRelationship());
   const cleanedRelationships = relationshipResults.entries;
   const groupErrors = relationshipResults.errors;
 
