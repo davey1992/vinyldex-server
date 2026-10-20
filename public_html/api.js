@@ -23,8 +23,10 @@ app.use('/', routes);
 //TEST SHIZZLE
 const post_tests = require ('./post_tests');
 const read_tests = require ('./read_tests');
+const update_tests = require ('./update_tests');
 app.use('/', post_tests);
 app.use('/', read_tests);
+app.use('/', update_tests);
 
 app.listen(PORT, () => {
   log(`Server running on port ${PORT}`);

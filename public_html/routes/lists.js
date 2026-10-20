@@ -4,11 +4,11 @@ const pool = require('../config/db');
 const router = express.Router();
 
 const {log, returnAddJSON} = require('../utils/helpers');
-const {basicReadTemplate, validatedEntries, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
+const {basicReadTemplate, validatedInserts, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
 const {schemaList} = require('../utils/schema.js');
 
 router.post('/add/list', async (req, res) => {
-  const listResults = await validatedEntries(req.body, schemaList());
+  const listResults = await validatedInserts(req.body, schemaList());
   const cleanedLists = listResults.entries;
   const groupErrors = listResults.errors;
 

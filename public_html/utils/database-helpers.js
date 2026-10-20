@@ -9,9 +9,8 @@ const {log} = require('./helpers');
 
 const acceptedOperators = ["=","!=","<",">","LIKE"];
 
-const sanitizeColumns = (chosenColumns, schema) => {
 
- 
+const sanitizeColumns = (chosenColumns, schema) => { 
   if (
     chosenColumns === undefined ||
     !Array.isArray(chosenColumns) || 
@@ -35,18 +34,20 @@ const sanitizeColumns = (chosenColumns, schema) => {
 
   return columnString;
 }
-const validatedEntries = async(json, schema) => {
+const validatedInserts = async(json, schema) => {
   const reqBody = Array.isArray(json) ? json : [json];
   const entries = [];
   const errors = [];
 
-  for (const value of reqBody) {
+  for (const item of reqBody) {
     try {
-      const tempEntry = await schema.validateAsync(value, {stripUnknown: true});
+      //THIS IS TO SUPPORT UPDATE ENTRY AND ADD ENTRY
+      const targetData = item.values ? item.values : item;
+      const tempEntry = await schema.validateAsync(targetData, {stripUnknown: true});
       entries.push(tempEntry);
     } 
     catch (err) {
-      errors.push(err.details[0].message + " - " + value.title);
+      errors.push(err.details[0].message + " - " + item.title);
     }
   }
 
@@ -55,10 +56,64 @@ const validatedEntries = async(json, schema) => {
     errors
   }
 }
-const validatedQuerySearch = (searchJSON) => {
+
+const validatedUpdates = async(json, schema) => {
+  const reqBody = Array.isArray(json) ? json : [json];
+  const values = [];
+  const errors = [];
+  const search = [];
+
+  // item of reqBody
+  for (let i = 0; i < reqBody.length; i++) {
+    try {
+      //THIS IS TO SUPPORT UPDATE ENTRY AND ADD ENTRY
+      const targetData = reqBody[i].values ? reqBody[i].values : reqBody[i];
+      const tempEntry = await schema.validateAsync(targetData, {stripUnknown: true});
+      values.push(tempEntry);
+      search.push(reqBody[i].search);
+    } 
+    catch (err) {
+      errors.push(err.details[0].message + " - " + reqBody[i].title);
+    }
+  }
+
+  return {
+    values,
+    errors,
+    search
+  }
+}
+
+const validatedUpdateQuery = (json, schema) => {
+  const values = [];
+  const schemaKeys = Object.keys(schema.describe().keys);
+  let counter = 0;
+  let query = ``;
+
+  if (typeof json !== 'object') {
+    console.log('Error Type');
+    return {}
+  }
+
+  for (const [key, value] of Object.entries(json)) {
+    //IF MATCH IN KEY
+    counter++;
+    if (schemaKeys.includes(key)) {
+      //CONJUNCTION
+      if (counter > 1) {
+        query += `, `;
+      }
+      query += `${key} = $${counter}`;
+      values.push(value);
+    }
+  }
+  return {query, values}
+}
+
+const validatedQuerySearch = (searchJSON, offset = 0) => {
   const values = [];
   let counter = 0;
-  let searchColumns = "";
+  let query = "";
 
   if (!Array.isArray(searchJSON)) {
     console.log('Error Type');
@@ -89,11 +144,11 @@ const validatedQuerySearch = (searchJSON) => {
       values.push(valueString);
 
       queryOperator = item.operator;
-      searchColumns += ` AND ${caseSensitiveString} ${queryOperator} $${counter}`;
+      query += ` AND ${caseSensitiveString} ${queryOperator} $${ counter + offset}`;
       
     }
   }
-  return {searchColumns, values}
+  return {query, values}
 }
 const validatedSearchJSON = async (json, schema) => {
   // DESIGNED TO CLEAN THE JSON AS ALL OF THIS MAY NOT BE APPLIED
@@ -121,7 +176,7 @@ const validatedSearchJSON = async (json, schema) => {
           field: fieldKey,
           value: entry[fieldKey],
           operator: jsonItem.operator ?? '=',
-          caseSensitive: jsonItem.caseSensitive ?? true
+          caseSensitive: jsonItem.caseSensitive ?? false
         });
       }
     } 
@@ -132,6 +187,10 @@ const validatedSearchJSON = async (json, schema) => {
   
   return search;
 };
+
+const validatedUpdateBuilder = () => {
+
+}
 
 const basicReadTemplate = async(req, res, schemaFunction, tableName, allowEmptySearch = false) => {
 
@@ -150,6 +209,7 @@ const basicReadTemplate = async(req, res, schemaFunction, tableName, allowEmptyS
         const chosenColumns = sanitizeColumns(req.body.columns, schemaFunction());
         const searchJSON = await validatedSearchJSON(req.body.search, schemaFunction(true));
         const querySearch = validatedQuerySearch(searchJSON);
+    
         
         const query = `SELECT ${chosenColumns} FROM ${tableName} WHERE true ${querySearch.searchColumns}`;
         const result = await pool.query(query, querySearch.values);
@@ -174,7 +234,10 @@ const basicReadTemplate = async(req, res, schemaFunction, tableName, allowEmptyS
 module.exports = {
     basicReadTemplate,
     sanitizeColumns,
-    validatedEntries,
+    validatedInserts,
+    validatedUpdates,
     validatedQuerySearch,
-    validatedSearchJSON
+    validatedSearchJSON,
+    validatedUpdateBuilder,
+    validatedUpdateQuery
 };

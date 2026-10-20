@@ -68,7 +68,8 @@ router.get('/read/entry-genre', (req, res) => {
     search: [
       {
         field: "genre_id",
-        value: 1
+        value: 1,
+        caseSensitive: true
       }
     ]
   });
@@ -96,7 +97,8 @@ router.get('/read/list-entries', (req, res) => {
     search: [
       {
         field: "list_id",
-        value: 1
+        value: 1,
+        caseSensitive: true
       }
     ]
   });
@@ -153,7 +155,8 @@ router.get('/read/users', (req, res) => {
     search: [
       {
         field: "id",
-        value: 1
+        value: 1,
+        caseSensitive: true
       }
     ]
   });
@@ -181,7 +184,8 @@ router.get('/read/lists', (req, res) => {
     search: [
       {
         field: "user_id",
-        value: 1
+        value: 1,
+        caseSensitive: true
       }
     ]
   });
@@ -230,7 +234,8 @@ router.get('/read/relationships', (req, res) => {
     search: [
       {
         field: "user_id",
-        value: 1
+        value: 1,
+        caseSensitive: true
       }
     ]
   });

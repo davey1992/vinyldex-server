@@ -4,11 +4,11 @@ const pool = require('../config/db');
 const router = express.Router();
 
 const {log, returnAddJSON} = require('../utils/helpers');
-const {basicReadTemplate, validatedEntries, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
+const {basicReadTemplate, validatedInserts, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
 const {schemaMediaCondition} = require('../utils/schema.js');
 
 router.post('/add/media-condition', async (req, res) => {
-  const media_conditionResults = await validatedEntries(req.body, schemaMediaCondition());
+  const media_conditionResults = await validatedInserts(req.body, schemaMediaCondition());
   const cleanmedia_conditions = media_conditionResults.entries;
   const groupErrors = media_conditionResults.errors;
 

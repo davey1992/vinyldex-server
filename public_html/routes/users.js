@@ -5,11 +5,11 @@ const pool = require('../config/db');
 const router = express.Router();
 
 const {log, returnAddJSON} = require('../utils/helpers');
-const {basicReadTemplate, validatedEntries, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
+const {basicReadTemplate, validatedInserts, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
 const {schemaUser} = require('../utils/schema.js');
 
 router.post('/add/user', async (req, res) => {
-  const userResults = await validatedEntries(req.body, schemaUser());
+  const userResults = await validatedInserts(req.body, schemaUser());
   const cleanedUsers = userResults.entries;
   const groupErrors = userResults.errors;
 

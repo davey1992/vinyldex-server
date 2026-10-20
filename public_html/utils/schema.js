@@ -1,10 +1,9 @@
 const joi = require('joi');
 
-const schemaEntry = (allowNull = false) => {
+const schemaEntry = (allowRead = false) => {
+  const modifier = (field) => allowRead ? field.optional().allow(null) : field.required();
 
-  const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
-
-  return joi.object({
+  const joiObject = {
     parent_id: joi.number().integer().min(0).allow(null)
       .messages({
         'number.base': 'Invalid parent_id: expected number(integer) format',
@@ -134,14 +133,19 @@ const schemaEntry = (allowNull = false) => {
       .messages({
         'object.base': 'Invalid properties: expected object format'
       })
-  })
+  }
+
+  if (allowRead) {
+     joiObject.id = joi.number().integer().positive().optional()
+  }
+
+  return joi.object(joiObject);
 };
 
-const schemaEntryGenre = (allowNull = false) => {
-  const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
-
-  return joi.object({
-    id: joi.number().integer().positive().optional(),
+const schemaEntryGenre = (allowRead = false) => {
+  const modifier = (field) => allowRead ? field.optional().allow(null) : field.required();
+  
+  const joiObject = {
     entry_id: modifier(joi.number().integer()
       .messages({
         'any.required': 'Invalid entry_id: is a required field',
@@ -156,13 +160,19 @@ const schemaEntryGenre = (allowNull = false) => {
         'number.integer': 'Invalid genre_id: expected whole number'
       })
     )
-  });
+  };
+
+  if (allowRead) {
+     joiObject.id = joi.number().integer().positive().optional()
+  }
+  
+  return joi.object(joiObject);
 }
 
-const schemaGenre = (allowNull = false) => {
-  const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
-  return joi.object({
-    id: joi.number().integer().positive().optional(),
+const schemaGenre = (allowRead = false) => {
+  const modifier = (field) => allowRead ? field.optional().allow(null) : field.required();
+
+  const joiObject = {
     parent_id: joi.number().integer().allow(null)
       .messages({
         'number.base': 'Invalid parent_id: expected number format',
@@ -180,14 +190,19 @@ const schemaGenre = (allowNull = false) => {
         'string.base': 'Invalid genre_description: expected string format',
         'string.max': 'Invalid genre_description: limit of 500 characters'
       })
-  });
+  };
+
+  if (allowRead) {
+     joiObject.id = joi.number().integer().positive().optional()
+  }
+
+  return joi.object(joiObject);
 }
 
-const schemaListEntry = (allowNull = false) => {
-  const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
+const schemaListEntry = (allowRead = false) => {
+  const modifier = (field) => allowRead ? field.optional().allow(null) : field.required();
   
-  return joi.object({
-    id: joi.number().integer().positive().optional(),
+  const joiObject = {
     list_id: modifier(joi.number().integer()
       .messages({
         'any.required': 'Invalid list_id: is a required field',
@@ -209,12 +224,18 @@ const schemaListEntry = (allowNull = false) => {
         'number.integer': 'Invalid position_order: expected whole number'
       })
     )
-  });
-}
-const schemaList = (allowNull = false) => {
+  };
 
-  // const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
-  return joi.object({
+  if (allowRead) {
+     joiObject.id = joi.number().integer().positive().optional()
+  }
+
+  return joi.object(joiObject);
+}
+
+const schemaList = (allowRead = false) => {
+  // const modifier = (field) => allowRead ? field.optional().allow(null) : field.required();
+  const joiObject = {
     id: joi.number().integer().positive().optional(),
     user_id: joi.number().integer()
       .messages({
@@ -250,12 +271,18 @@ const schemaList = (allowNull = false) => {
       .messages({
         'object.base': 'Invalid properties: expected object format'
       })
-  });
+  };
+
+  if (allowRead) {
+     joiObject.id = joi.number().integer().positive().optional()
+  }
+
+  return joi.object(joiObject);
 }
 
-const schemaMediaCondition = (allowNull = false) => {
-  const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
-  return joi.object({
+const schemaMediaCondition = (allowRead = false) => {
+  const modifier = (field) => allowRead ? field.optional().allow(null) : field.required();
+  const joiObject = {
     id: joi.number().integer().positive().optional(),
     condition: modifier(joi.string().max(20)
       .messages({
@@ -270,11 +297,17 @@ const schemaMediaCondition = (allowNull = false) => {
         'string.max': 'Invalid description: limit of 500 characters'
       })
     )
-  });
+  };
+
+  if (allowRead) {
+     joiObject.id = joi.number().integer().positive().optional()
+  }
+
+  return joi.object(joiObject);
 }
 
-const schemaRelationship = (allowNull = false) => {
-  return joi.object({
+const schemaRelationship = (allowRead = false) => {
+  const joiObject = {
     id: joi.number().integer().positive().optional(),
     user_id: joi.number().integer()
       .messages({
@@ -290,11 +323,17 @@ const schemaRelationship = (allowNull = false) => {
       .messages({
         'object.base': 'Invalid relationship_types: expected object format'
       })
-  });
+  };
+
+  if (allowRead) {
+     joiObject.id = joi.number().integer().positive().optional()
+  }
+
+  return joi.object(joiObject);
 }
-const schemaUser = (allowNull = false) => {
-  const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
-  return joi.object({
+const schemaUser = (allowRead = false) => {
+  const modifier = (field) => allowRead ? field.optional().allow(null) : field.required();
+  const joiObject = {
     id: joi.number().integer().positive().optional(),
     display_name: modifier(joi.string().pattern(/^[a-zA-Z0-9 _-]+$/).trim().max(25)
       .messages({
@@ -344,7 +383,13 @@ const schemaUser = (allowNull = false) => {
       .messages({
         'object.base': 'Invalid properties: expected object format'
     })
-  });
+  };
+
+  if (allowRead) {
+     joiObject.id = joi.number().integer().positive().optional()
+  }
+
+  return joi.object(joiObject);
 }
 
 module.exports = {
