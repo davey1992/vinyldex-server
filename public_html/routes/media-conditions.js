@@ -3,7 +3,8 @@ const express = require('express');
 const pool = require('../config/db');
 const router = express.Router();
 
-const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
+const {log, returnAddJSON} = require('../utils/helpers');
+const {basicReadTemplate, validatedEntries, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
 const {schemaMediaCondition} = require('../utils/schema.js');
 
 router.post('/add/media-condition', async (req, res) => {
@@ -64,6 +65,11 @@ router.post('/add/media-condition', async (req, res) => {
   return res.status(sendUser.status).json(
     sendUser.data
   );
+});
+
+router.post('/read/media-conditions', async (req, res) => {
+  const result = await basicReadTemplate(req, res, schemaMediaCondition, 'media_conditions', true);
+  console.log(result.data);
 });
 
 module.exports = router;

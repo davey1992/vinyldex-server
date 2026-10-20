@@ -3,7 +3,8 @@ const express = require('express');
 const pool = require('../config/db');
 const router = express.Router();
 
-const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
+const {log, returnAddJSON} = require('../utils/helpers');
+const {basicReadTemplate, validatedEntries, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
 const {schemaList} = require('../utils/schema.js');
 
 router.post('/add/list', async (req, res) => {
@@ -90,5 +91,11 @@ router.post('/add/list', async (req, res) => {
   const sendUser = returnAddJSON(req, grammar, groupErrors);
   return res.status(sendUser.status).json(sendUser.data);
 });
+
+router.post('/read/lists', async (req, res) => {
+  const result = await basicReadTemplate(req, res, schemaList, 'lists', false);
+  console.log(result.data);
+});
+
 
 module.exports = router;

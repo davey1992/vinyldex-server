@@ -141,6 +141,7 @@ const schemaEntryGenre = (allowNull = false) => {
   const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
 
   return joi.object({
+    id: joi.number().integer().positive().optional(),
     entry_id: modifier(joi.number().integer()
       .messages({
         'any.required': 'Invalid entry_id: is a required field',
@@ -161,6 +162,7 @@ const schemaEntryGenre = (allowNull = false) => {
 const schemaGenre = (allowNull = false) => {
   const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
   return joi.object({
+    id: joi.number().integer().positive().optional(),
     parent_id: joi.number().integer().allow(null)
       .messages({
         'number.base': 'Invalid parent_id: expected number format',
@@ -185,6 +187,7 @@ const schemaListEntry = (allowNull = false) => {
   const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
   
   return joi.object({
+    id: joi.number().integer().positive().optional(),
     list_id: modifier(joi.number().integer()
       .messages({
         'any.required': 'Invalid list_id: is a required field',
@@ -212,6 +215,7 @@ const schemaList = (allowNull = false) => {
 
   // const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
   return joi.object({
+    id: joi.number().integer().positive().optional(),
     user_id: joi.number().integer()
       .messages({
         'number.base': 'Invalid user_id: expected number',
@@ -252,6 +256,7 @@ const schemaList = (allowNull = false) => {
 const schemaMediaCondition = (allowNull = false) => {
   const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
   return joi.object({
+    id: joi.number().integer().positive().optional(),
     condition: modifier(joi.string().max(20)
       .messages({
         'any.required': 'Invalid condition: is a required field',
@@ -270,6 +275,7 @@ const schemaMediaCondition = (allowNull = false) => {
 
 const schemaRelationship = (allowNull = false) => {
   return joi.object({
+    id: joi.number().integer().positive().optional(),
     user_id: joi.number().integer()
       .messages({
         'number.base': 'Invalid user_id: expected number format',
@@ -289,6 +295,7 @@ const schemaRelationship = (allowNull = false) => {
 const schemaUser = (allowNull = false) => {
   const modifier = (field) => allowNull ? field.optional().allow(null) : field.required();
   return joi.object({
+    id: joi.number().integer().positive().optional(),
     display_name: modifier(joi.string().pattern(/^[a-zA-Z0-9 _-]+$/).trim().max(25)
       .messages({
         'string.pattern.base': 'Invalid display_name: contains disallowed characters',
@@ -315,18 +322,20 @@ const schemaUser = (allowNull = false) => {
         'any.required': 'Invalid password_match: is a required field'
       })
     ),
-    account_type: joi.number().integer().max(99).required()
+    account_type: modifier(joi.number().integer().max(99)
       .messages({
         'number.base': 'Invalid account_type: expected number(integer) format',
         'number.integer': 'Invalid account_type: expected an integer',
         'number.max': 'Invalid account_type: number must not exceed 99'
-      }),
-    visibility: joi.number().integer().max(99).required()
+      })
+    ),
+    visibility: modifier(joi.number().integer().max(99).required()
       .messages({
         'number.base': 'Invalid visibility: expected number(integer) format',
         'number.integer': 'Invalid visibility: expected an integer',
         'number.max': 'Invalid visibility: number must not exceed 99'
-      }),
+      })
+    ),
     state: joi.object().allow(null).default({})
       .messages({
         'object.base': 'Invalid state: expected object format'

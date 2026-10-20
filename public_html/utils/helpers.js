@@ -4,29 +4,6 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const DEBUG = process.env.NODE_ENV === 'dev';
 
 
-const columnSanitizer = (chosenColumns, schema) => {
-  if (
-    !Array.isArray(chosenColumns) || 
-    chosenColumns.length === 0
-  ) {
-    return "*";
-  }
-
-  const columnString = chosenColumns.join(',');
-
-  if (!/^[a-z0-9_,]+$/.test(columnString)) {
-    throw new Error('Security violation: Invalid column characters detected.');
-  }
-
-  const keys = Object.keys(schema.describe().keys);
-  for (const column of chosenColumns) {
-    if(keys.includes(column) === false) {
-        throw new Error('Security violation: Invalid column');
-    }
-  }
-
-  return columnString;
-}
 
 const log = (message) => {
   if (DEBUG) {
@@ -86,64 +63,8 @@ const toSnakeCase = (str) => {
   return str.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase()
 }; 
 
-const validatedEntries = async(json, schema) => {
-  const reqBody = Array.isArray(json) ? json : [json];
-  const entries = [];
-  const errors = [];
-
-  for (const value of reqBody) {
-    try {
-      const tempEntry = await schema.validateAsync(value, {stripUnknown: true});
-      entries.push(tempEntry);
-    } 
-    catch (err) {
-      errors.push(err.details[0].message + " - " + value.title);
-    }
-  }
-
-  return {
-    entries,
-    errors
-  }
-}
-
-const validatedSearch = async (json, schema) => {
-
-  json = Array.isArray(json) ? json : [json];
-  let search = [];
-  let entry;
-
-  for (let jsonItem of json) {
-    let tempBuilder = {}; 
-    tempBuilder[jsonItem.field] = jsonItem.value;
-
-    try {
-      entry = await schema.validateAsync(tempBuilder, { stripUnknown: true });
-      
-      const fieldKey = Object.keys(entry)[0];
-
-      search.push({
-          field: fieldKey,
-          value: entry[fieldKey],
-          operator: jsonItem.operator ?? '=',
-          caseSensitive: jsonItem.caseSensitive ?? true
-      });
-    } 
-    catch (err) {
-      error = err.details[0].message;
-    }
-  }
-  
-
-  return search;
-};
-
-
 module.exports = {
-  columnSanitizer,
   log,
   returnAddJSON,
   toSnakeCase,
-  validatedEntries,
-  validatedSearch
 };

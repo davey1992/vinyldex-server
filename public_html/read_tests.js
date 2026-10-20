@@ -4,12 +4,7 @@ const router = express.Router();
 
 router.get('/read/entries', (req, res) => {
   const customJSON = JSON.stringify({
-    columns: [
-      "user_id",
-      "title",
-      "artist",
-      "bpm"
-    ],
+   
     search: [
       {
         field: "title",
@@ -55,6 +50,227 @@ router.get('/read/entries', (req, res) => {
       const payload = ${JSON.stringify(customJSON)};
 
       fetch('/read/entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      })
+      .then(response => response.json())
+      .then(data => log('Success:', data))
+      .catch(error => console.error('Error:', error));
+    </script>
+  `);
+});
+
+
+router.get('/read/entry-genre', (req, res) => {
+  const customJSON = JSON.stringify({
+   
+    search: [
+      {
+        field: "genre_id",
+        value: 1
+      }
+    ]
+  });
+
+  res.send(`
+    <h2>Reading Entry Genre...</h2>
+    <script>
+      const payload = ${JSON.stringify(customJSON)};
+
+      fetch('/read/entry-genre', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      })
+      .then(response => response.json())
+      .then(data => log('Success:', data))
+      .catch(error => console.error('Error:', error));
+    </script>
+  `);
+});
+
+router.get('/read/list-entries', (req, res) => {
+  const customJSON = JSON.stringify({
+   
+    search: [
+      {
+        field: "list_id",
+        value: 1
+      }
+    ]
+  });
+
+  res.send(`
+    <h2>Reading Entry Genre...</h2>
+    <script>
+      const payload = ${JSON.stringify(customJSON)};
+
+      fetch('/read/list-entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      })
+      .then(response => response.json())
+      .then(data => log('Success:', data))
+      .catch(error => console.error('Error:', error));
+    </script>
+  `);
+});
+
+router.get('/read/genre', (req, res) => {
+  const customJSON = JSON.stringify({
+    columns: [
+      'genre_name'
+    ],
+    // search: [
+    //   {
+    //     field: "parent_id",
+    //     value: 1
+    //   }
+    // ]
+  });
+
+  res.send(`
+    <h2>Reading Entry Genre...</h2>
+    <script>
+      const payload = ${JSON.stringify(customJSON)};
+
+      fetch('/read/genre', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      })
+      .then(response => response.json())
+      .then(data => log('Success:', data))
+      .catch(error => console.error('Error:', error));
+    </script>
+  `);
+});
+
+router.get('/read/users', (req, res) => {
+  const customJSON = JSON.stringify({
+    search: [
+      {
+        field: "id",
+        value: 1
+      }
+    ]
+  });
+
+  res.send(`
+    <h2>Reading Entry Genre...</h2>
+    <script>
+      const payload = ${JSON.stringify(customJSON)};
+
+      fetch('/read/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      })
+      .then(response => response.json())
+      .then(data => log('Success:', data))
+      .catch(error => console.error('Error:', error));
+    </script>
+  `);
+});
+
+router.get('/read/lists', (req, res) => {
+  const customJSON = JSON.stringify({
+   
+    search: [
+      {
+        field: "user_id",
+        value: 1
+      }
+    ]
+  });
+
+  res.send(`
+    <h2>Reading Entry Genre...</h2>
+    <script>
+      const payload = ${JSON.stringify(customJSON)};
+
+      fetch('/read/lists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      })
+      .then(response => response.json())
+      .then(data => log('Success:', data))
+      .catch(error => console.error('Error:', error));
+    </script>
+  `);
+});
+
+router.get('/read/media-conditions', (req, res) => {
+  const customJSON = JSON.stringify({
+    columns:['condition']
+  });
+
+  res.send(`
+    <h2>Reading Entry Genre...</h2>
+    <script>
+      const payload = ${JSON.stringify(customJSON)};
+
+      fetch('/read/media-conditions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      })
+      .then(response => response.json())
+      .then(data => log('Success:', data))
+      .catch(error => console.error('Error:', error));
+    </script>
+  `);
+});
+
+router.get('/read/relationships', (req, res) => {
+  const customJSON = JSON.stringify({
+    search: [
+      {
+        field: "user_id",
+        value: 1
+      }
+    ]
+  });
+
+  res.send(`
+    <h2>Reading Entry Genre...</h2>
+    <script>
+      const payload = ${JSON.stringify(customJSON)};
+
+      fetch('/read/relationships', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      })
+      .then(response => response.json())
+      .then(data => log('Success:', data))
+      .catch(error => console.error('Error:', error));
+    </script>
+  `);
+});
+
+router.get('/read/genre', (req, res) => {
+  const customJSON = JSON.stringify({
+    columns: [
+      'genre_name'
+    ],
+    // search: [
+    //   {
+    //     field: "parent_id",
+    //     value: 1
+    //   }
+    // ]
+  });
+
+  res.send(`
+    <h2>Reading Entry Genre...</h2>
+    <script>
+      const payload = ${JSON.stringify(customJSON)};
+
+      fetch('/read/genre', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: payload

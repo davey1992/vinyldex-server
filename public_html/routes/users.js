@@ -4,7 +4,8 @@ const bcrypt = require('bcrypt');
 const pool = require('../config/db');
 const router = express.Router();
 
-const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
+const {log, returnAddJSON} = require('../utils/helpers');
+const {basicReadTemplate, validatedEntries, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
 const {schemaUser} = require('../utils/schema.js');
 
 router.post('/add/user', async (req, res) => {
@@ -92,6 +93,12 @@ router.post('/add/user', async (req, res) => {
   return res.status(sendUser.status).json(
     sendUser.data
   );
+});
+
+
+router.post('/read/users', async (req, res) => {
+  const result = await basicReadTemplate(req, res, schemaUser, 'users', false);
+  console.log(result.data);
 });
 
 module.exports = router;

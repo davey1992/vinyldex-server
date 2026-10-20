@@ -3,7 +3,8 @@ const express = require('express');
 const pool = require('../config/db');
 const router = express.Router();
 
-const {log, returnAddJSON, validatedEntries, validatedEntry} = require('../utils/helpers');
+const {log, returnAddJSON} = require('../utils/helpers');
+const {basicReadTemplate, validatedEntries, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
 const {schemaGenre} = require('../utils/schema.js');
 
 router.post('/add/genre', async (req, res) => {
@@ -86,6 +87,11 @@ router.post('/add/genre', async (req, res) => {
     sendUser.data
   );
 
+});
+
+router.post('/read/genre', async (req, res) => {
+  const result = await basicReadTemplate(req, res, schemaGenre, 'genres', true);
+  console.log(result.data);
 });
 
 
