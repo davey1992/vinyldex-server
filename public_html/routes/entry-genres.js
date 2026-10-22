@@ -4,7 +4,8 @@ const pool = require('../config/db');
 const router = express.Router();
 
 const {log, returnAddJSON} = require('../utils/helpers');
-const {basicReadTemplate, validatedInserts, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
+const {basicReadTemplate, validatedInserts, sanitizeColumns, buildWhereClause, validateSearchInput} = require('../utils/database-helpers');
+const {constraintsEntryGenre} = require('../utils/constraints.js');
 const {schemaEntryGenre} = require('../utils/schema.js');
 
 router.post('/add/entry-genre', async (req, res) => {
@@ -48,29 +49,7 @@ router.post('/add/entry-genre', async (req, res) => {
     } 
     catch (err) {
       //FORIGN KEY VALIDATION ISSUES
-      if (err.code === '23503') {    
-        switch (err.constraint) {
-          case 'fk_entry_id':
-            log(`Invalid entry_id: (${cleanedEntryGenre.entry_id})  does not exist`);
-            groupErrors.push(`Invalid entry_id: (${cleanedEntryGenre.entry_id})  does not exist`);
-          break;
-          case 'fk_genre_id':
-            log(`Invalid genre_id: (${cleanedEntryGenre.genre_id}) does not exist`);
-            groupErrors.push(`Invalid genre_id: (${cleanedEntryGenre.genre_id}) does not exist`);
-          break;
-          default:
-            console.error('Database insert error:', err);
-        }
-      }
-      else if (err.code === '23505') {
-        if (err.constraint === 'unique_entry_id_genre_id') {
-          log(`Invalid entry_genre (entry_id:${cleanedEntryGenre.entry_id}, genre_id:${cleanedEntryGenre.genre_id}) already exists`);
-          groupErrors.push(`Invalid entry_genre (entry_id:${cleanedEntryGenre.entry_id}, genre_id:${cleanedEntryGenre.genre_id}) already exists`);
-        }
-      }
-      else {
-        console.error('Database insert error:', err);
-      }
+      groupErrors.push(...constraintsEntryGenre(err, cleanedEntryGenres));
     }
   }
 

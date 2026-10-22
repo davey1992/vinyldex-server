@@ -4,7 +4,8 @@ const pool = require('../config/db');
 const router = express.Router();
 
 const {log, returnAddJSON} = require('../utils/helpers');
-const {basicReadTemplate, validatedInserts, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
+const {basicReadTemplate, validatedInserts, sanitizeColumns, buildWhereClause, validateSearchInput} = require('../utils/database-helpers');
+const {constraintsListEntry} = require('../utils/constraints.js');
 const {schemaListEntry} = require('../utils/schema.js');
 
 router.post('/add/list-entry', async (req, res) => {  
@@ -51,35 +52,7 @@ router.post('/add/list-entry', async (req, res) => {
         log(`Entry List: Created - ${cleanedListEntry.list_id}`);
       } 
       catch (err) {
-        //FORIGN KEY VALIDATION ISSUES
-        if (err.code === '23503') {
-          let errorMessage = 'Invalid primary key constraint';
-      
-          switch (err.constraint) {
-            case 'fk_list_id':
-              errorMessage = `Invalid list_id: (${cleanedListEntry.list_id}) list does not exist`;
-              groupErrors.push(`Invalid list_id: (${cleanedListEntry.list_id}) list does not exist`);
-            break;
-            case 'fk_entry_id':
-              errorMessage = `Invalid entry_id: (${cleanedListEntry.entry_id}) does not exist`;
-              groupErrors.push(`Invalid entry_id: (${cleanedListEntry.entry_id}) does not exist`);
-            break;
-            default: 
-              console.error('Unexpected database error:', err);
-          }
-        }
-        else if (err.code === '23505') {
-          if(err.constraint === 'unique_list_id_entry_id') {
-              log(`Invalid list_id: (${cleanedListEntry.list_id}) entry_id: (${cleanedListEntry.entry_id}) already exists`);
-              groupErrors.push(`Invalid list_id: (${cleanedListEntry.list_id}) entry_id: (${cleanedListEntry.entry_id}) already exists`);
-          }
-          else {
-             console.error('Unexpected database error:', err);
-          }
-        }
-        else {
-          console.error('Unexpected database error:', err);
-        }
+         groupErrors.push(...constraintsListEntry(err, cleanedListEntry));
       }
     }
 

@@ -84,7 +84,7 @@ const validatedUpdates = async(json, schema) => {
   }
 }
 
-const validatedUpdateQuery = (json, schema) => {
+const buildSetClause = (json, schema) => {
   const values = [];
   const schemaKeys = Object.keys(schema.describe().keys);
   let counter = 0;
@@ -110,7 +110,7 @@ const validatedUpdateQuery = (json, schema) => {
   return {query, values}
 }
 
-const validatedQuerySearch = (searchJSON, offset = 0) => {
+const buildWhereClause = (searchJSON, offset = 0) => {
   const values = [];
   let counter = 0;
   let query = "";
@@ -150,7 +150,7 @@ const validatedQuerySearch = (searchJSON, offset = 0) => {
   }
   return {query, values}
 }
-const validatedSearchJSON = async (json, schema) => {
+const validateSearchInput = async (json, schema) => {
   // DESIGNED TO CLEAN THE JSON AS ALL OF THIS MAY NOT BE APPLIED
   if (!json || (typeof json === 'object' && Object.keys(json).length === 0)) {
     return [];
@@ -207,8 +207,8 @@ const basicReadTemplate = async(req, res, schemaFunction, tableName, allowEmptyS
 
     try {
         const chosenColumns = sanitizeColumns(req.body.columns, schemaFunction());
-        const searchJSON = await validatedSearchJSON(req.body.search, schemaFunction(true));
-        const querySearch = validatedQuerySearch(searchJSON);
+        const searchJSON = await validateSearchInput(req.body.search, schemaFunction(true));
+        const querySearch = buildWhereClause(searchJSON);
     
         
         const query = `SELECT ${chosenColumns} FROM ${tableName} WHERE true ${querySearch.searchColumns}`;
@@ -236,8 +236,8 @@ module.exports = {
     sanitizeColumns,
     validatedInserts,
     validatedUpdates,
-    validatedQuerySearch,
-    validatedSearchJSON,
+    buildWhereClause,
+    validateSearchInput,
     validatedUpdateBuilder,
-    validatedUpdateQuery
+    buildSetClause
 };

@@ -62,20 +62,18 @@ router.get('/add/relationship', (req, res) => {
   `);
 });
 
-
-
 router.get('/add/media-condition', (req, res) => {
   const customJSON = JSON.stringify([{
     condition: 'Mint',
     description: 'Pristine copy, unplayed or archive condition'
   },
   {
-    condition: 'Cool',
-    description: 'Cool copy'
+    condition: 'Cool1',
+    description: 'Cool copy1'
   },
   {
-    condition: 'Poot',
-    description: 'Poor copy'
+    condition: 'Poot2',
+    description: 'Poor copy2'
   }
 ]);
   

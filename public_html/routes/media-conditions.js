@@ -4,17 +4,18 @@ const pool = require('../config/db');
 const router = express.Router();
 
 const {log, returnAddJSON} = require('../utils/helpers');
-const {basicReadTemplate, validatedInserts, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
+const {basicReadTemplate, validatedInserts, sanitizeColumns, buildWhereClause, validateSearchInput} = require('../utils/database-helpers');
+const {constraintsMediaCondition} = require('../utils/constraints.js');
 const {schemaMediaCondition} = require('../utils/schema.js');
 
 router.post('/add/media-condition', async (req, res) => {
-  const media_conditionResults = await validatedInserts(req.body, schemaMediaCondition());
-  const cleanmedia_conditions = media_conditionResults.entries;
-  const groupErrors = media_conditionResults.errors;
+  const cleanedMediaConditions = await validatedInserts(req.body, schemaMediaCondition());
+  const cleanMediaConditions = cleanedMediaConditions.entries;
+  const groupErrors = cleanedMediaConditions.errors;
 
   const grammar = req.body.length == 1 ? 'Media Condition' : 'Media Conditions';
 
-  if (cleanmedia_conditions.length == 0) {
+  if (cleanMediaConditions.length == 0) {
     log('No ' + grammar + ' have been added');
     log(groupErrors);
 
@@ -26,7 +27,7 @@ router.post('/add/media-condition', async (req, res) => {
     });
   }
 
-  for (const cleanmedia_condition of cleanmedia_conditions) {
+  for (const cleanMediaCondition of cleanMediaConditions) {
     const query = `
       INSERT INTO media_conditions (
         condition,
@@ -40,24 +41,16 @@ router.post('/add/media-condition', async (req, res) => {
     `;
     
     const values = [
-      cleanmedia_condition.condition,
-      cleanmedia_condition.description,
+      cleanMediaCondition.condition,
+      cleanMediaCondition.description,
     ];
 
     try {
       const result = await pool.query(query, values);
-      log("Entry: Created - " + cleanmedia_condition.condition);
+      log("Entry: Created - " + cleanMediaCondition.condition);
     } 
     catch (err) {
-      if (err.code === '23505') {
-        if (err.constraint === 'unique_media_condition') {
-          log('Invalid media_condition: already exists');
-          groupErrors.push(`Invalid media_condition: (${cleanmedia_condition.condition}) already exists`);
-        }
-      }
-      else {
-        console.error('Database insert error:', err);
-      }
+      groupErrors.push(...constraintsMediaCondition(err, cleanMediaConditions));
     }
   }
 

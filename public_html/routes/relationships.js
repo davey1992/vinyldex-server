@@ -4,7 +4,8 @@ const pool = require('../config/db');
 const router = express.Router();
 
 const {log, returnAddJSON} = require('../utils/helpers');
-const {basicReadTemplate, validatedInserts, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
+const {basicReadTemplate, validatedInserts, sanitizeColumns, buildWhereClause, validateSearchInput} = require('../utils/database-helpers');
+const {constraintsRelationship} = require('../utils/constraints.js');
 const {schemaRelationship} = require('../utils/schema.js');
 
 router.post('/add/relationship', async (req, res) => {
@@ -52,32 +53,7 @@ router.post('/add/relationship', async (req, res) => {
       log("Relationship: Created - " + cleanRelationship.user_id + ' - ' + cleanRelationship.target_user_id);
     } 
     catch (err) {
-      if (err.code === '23503') {
-        switch (err.constraint) {
-          case 'fk_relationship_user_id':
-            log(`Invalid user_id: ${cleanRelationship.user_id} does not exist`);
-            groupErrors.push(`Invalid user_id: ${cleanRelationship.user_id} does not exist`);
-            break;
-          case 'fk_relationship_user_target_id':
-            log(`Invalid target_user_id: ${cleanRelationship.target_user_id} does not exist`);
-            groupErrors.push(`Invalid target_user_id: ${cleanRelationship.target_user_id} does not exist`);
-            break;
-          default:
-            console.error('Database insert error:', err);
-        }
-      }
-      else if (err.code === '23505') {
-        if (err.constraint === 'unique_user_target') {
-          log(`Invalid userTarget: already assigned (${cleanRelationship.user_id} -> ${cleanRelationship.target_user_id})`);
-          groupErrors.push(`Invalid userTarget: already assigned for user_id ${cleanRelationship.user_id}`);
-        }
-        else {
-          console.error('Database insert error:', err);
-        }
-      } 
-      else {
-        console.error('Database insert error:', err);
-      }
+      groupErrors.push(...constraintsRelationship(err, cleanRelationship));
     }
   }
 

@@ -4,7 +4,8 @@ const pool = require('../config/db');
 const router = express.Router();
 
 const {log, returnAddJSON} = require('../utils/helpers');
-const {basicReadTemplate, validatedInserts, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
+const {basicReadTemplate, validatedInserts, sanitizeColumns, buildWhereClause, validateSearchInput} = require('../utils/database-helpers');
+const {constraintsList} = require('../utils/constraints.js');
 const {schemaList} = require('../utils/schema.js');
 
 router.post('/add/list', async (req, res) => {
@@ -66,25 +67,7 @@ router.post('/add/list', async (req, res) => {
       log("List: Created - " + cleanedList.name);
     } 
     catch (err) {
-      if (err.code === '23503') {
-        if (err.constraint === 'fk_user_id') {
-          log(`Invalid user_id: ${cleanedList.user_id} does not exist`);
-          groupErrors.push(`Invalid user_id: ${cleanedList.user_id} does not exist`);
-        } else {
-          console.error('Unexpected database error:', err);
-        }
-      }
-      else if (err.code === '23505') {
-        if (err.constraint === 'unique_user_list_name') {
-          log(`Invalid user_id (${cleanedList.user_id}) , name (${cleanedList.name}): Duplicate list name for this user`);
-          groupErrors.push(`Invalid user_id (${cleanedList.user_id}) , name (${cleanedList.name}): Duplicate list name for this user`);
-        } else {
-          console.error('Unexpected database error:', err);
-        }
-      }
-      else {
-        console.error('Unexpected database error:', err);
-      }
+      groupErrors.push(...constraintsList(err, cleanedList));
     }
   }
 

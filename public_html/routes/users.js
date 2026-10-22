@@ -5,7 +5,8 @@ const pool = require('../config/db');
 const router = express.Router();
 
 const {log, returnAddJSON} = require('../utils/helpers');
-const {basicReadTemplate, validatedInserts, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
+const {basicReadTemplate, validatedInserts, sanitizeColumns, buildWhereClause, validateSearchInput} = require('../utils/database-helpers');
+const {constraintsUser} = require('../utils/constraints.js');
 const {schemaUser} = require('../utils/schema.js');
 
 router.post('/add/user', async (req, res) => {
@@ -69,23 +70,7 @@ router.post('/add/user', async (req, res) => {
       log("User: Created - " + cleanedUser.display_name);
     } 
     catch (err) {
-      //DUPLICATE CONSTRAINTS
-      if (err.code === '23505') {
-        if (err.constraint === 'unique_display_name') {
-          log(`Invalid display_name: (${cleanedUser.display_name}) already exists`);
-          groupErrors.push(`Invalid display_name: (${cleanedUser.display_name}) already exists`);
-        }
-        else if (err.constraint === 'unique_email') {
-          log(`Invalid email: (${cleanedUser.email}) already exists`);
-          groupErrors.push(`Invalid email: (${cleanedUser.email}) already exists`);
-        }
-        else {
-          console.error('Unexpected database error:', err);
-        }
-      }
-      else {
-        console.error('Unexpected database error:', err);
-      }
+      groupErrors.push(...constraintsUser(err, cleanedUsers));
     }
   }
 

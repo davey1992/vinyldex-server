@@ -4,7 +4,8 @@ const pool = require('../config/db');
 const router = express.Router();
 
 const {log, returnAddJSON} = require('../utils/helpers');
-const {basicReadTemplate, validatedInserts, sanitizeColumns, validatedQuerySearch, validatedSearchJSON} = require('../utils/database-helpers');
+const {basicReadTemplate, validatedInserts, sanitizeColumns, buildWhereClause, validateSearchInput} = require('../utils/database-helpers');
+const {constraintsGenre} = require('../utils/constraints.js');
 const {schemaGenre} = require('../utils/schema.js');
 
 router.post('/add/genre', async (req, res) => {
@@ -58,27 +59,7 @@ router.post('/add/genre', async (req, res) => {
     } 
     
     catch (err) {
-       if (err.code === '23503') {
-        if (err.constraint === 'fk_genre_parent_id') {
-          log(`Invalid parent_id: (${cleanedGenre.parent_id}) parent genre does not exist`);
-          groupErrors.push(`Invalid parent_id: (${cleanedGenre.parent_id}) parent genre does not exist`);
-        }
-        else {
-          console.error('Database insert error:', err);
-        }
-      }
-      else if (err.code === '23505') {
-        if (err.constraint === 'unique_genre_name') {
-          log(`Invalid genre_name: (${cleanedGenre.genre_name}) already exists`);
-          groupErrors.push(`Invalid genre_name: (${cleanedGenre.genre_name}) already exists`);
-        }
-        else {
-          console.error('Database insert error:', err);
-        }
-      }
-      else {
-         console.error('Database insert error:', err);
-      }
+       groupErrors.push(...constraintsGenre(err, cleanedGenre));
     }
   }
 

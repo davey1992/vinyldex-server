@@ -200,19 +200,20 @@ router.get('/update/entry', (req, res) => {
       {
         "values": {
           "title": "Ohhh yooooo",
-          "personal_rating": 10
+          "personal_rating": 10,
         },
         "search": [
           {
             "field": "id",
-            "value": 326
-          },
+            "value": 3269
+          }
         ]
       },
       {
         "values": {
           "title": "Ohhh cooooool",
-          "personal_rating": 10
+          "personal_rating": 10,
+          "user_id": 999
         },
         "search": [
           {
