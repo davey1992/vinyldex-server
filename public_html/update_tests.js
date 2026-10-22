@@ -164,34 +164,6 @@ router.get('/update/list', (req, res) => {
   `);
 });
 
-router.get('/update/entry-genre', (req, res) => {
-  const customJSON = JSON.stringify([
-    {
-      "entry_id": 1,
-      "genre_id": 2
-    },
-    {
-      "entry_id": 1,
-      "genre_id": 3
-    },
-  ]);
-  
-  res.send(`
-    <h2>Sending hardcoded JSON...</h2>
-    <script>
-      const payload = ${JSON.stringify(customJSON)};
-
-      fetch('/update/entry-genre', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: payload
-      })
-      .then(response => response.json())
-      .then(data => log('Success:', data))
-      .catch(error => console.error('Error:', error));
-    </script>
-  `);
-});
 
 
 router.get('/update/entry', (req, res) => {
@@ -231,6 +203,40 @@ router.get('/update/entry', (req, res) => {
       const payload = ${JSON.stringify(customJSON)};
 
       fetch('/update/entry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      })
+      .then(response => response.json())
+      .then(data => log('Success:', data))
+      .catch(error => console.error('Error:', error));
+    </script>
+  `);
+});
+
+router.get('/update/entry-genre', (req, res) => {
+  const customJSON = JSON.stringify(
+    [
+      {
+        "values": {
+          "genre_id": 2
+        },
+        "search": [
+          {
+            "field": "id",
+            "value": 1
+          }
+        ]
+      }
+    ]
+  );
+  
+  res.send(`
+    <h2>Sending hardcoded entry JSON...</h2>
+    <script>
+      const payload = ${JSON.stringify(customJSON)};
+
+      fetch('/update/entry-genre', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: payload
