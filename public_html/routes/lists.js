@@ -81,4 +81,64 @@ router.post('/read/lists', async (req, res) => {
 });
 
 
+router.post('/update/list', async (req, res) => {
+  const entryResults = await validatedUpdates(req.body, schemaList(true));
+  const grammar = entryResults.values.length == 1 ? 'List' : 'Lists';
+  const groupErrors = entryResults.errors;
+
+  if (entryResults.values.length == 0) {
+    log('No ' + grammar + ' have been added');
+    log(entryResults.errors);
+
+    return res.status(400).json({
+      success:false,
+      type: 'database_error',
+      message: 'No ' + grammar + ' have been added',
+      error: entryResults.errors
+    });
+  }
+
+  const entryPromise = entryResults.values.map(async (entryResult, i) => {
+    const setClause = buildSetClause(entryResult, schemaList());
+    
+  
+
+    const searchCriteria = await validateSearchInput(entryResults.search[i], schemaList(true));
+  
+    const whereClause = buildWhereClause(searchCriteria, setClause.values.length);
+
+    const query = `UPDATE lists SET ${setClause.query} WHERE TRUE ${whereClause.query}`;
+    const values = [...setClause.values, ...whereClause.values];
+
+    try {
+      const result = await pool.query(query, values);
+      if (result.rowCount === 0) {
+        groupErrors.push(`${grammar} not found with the given search criteria`)
+      }
+    } 
+    catch (err) {
+      groupErrors.push(...constraintsList(err, entryResult));
+    }
+  });
+  await Promise.all(entryPromise);
+
+  if (groupErrors.length > 0) {
+    let countString = "Some";
+
+    if (groupErrors.length == entryResults.values.length) {
+      countString = "All";
+    }
+
+    log(`${countString} ${grammar.toLowerCase()} did not update: see errors below for more details`);
+    log(groupErrors);
+
+    return res.status(400).json({
+      success: false,
+      type: 'database_error',
+      message: `${countString} ${grammar.toLowerCase()} did not update: see errors below for more details`,
+      errors: groupErrors
+    });
+  }
+});
+
 module.exports = router;

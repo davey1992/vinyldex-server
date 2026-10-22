@@ -234,20 +234,20 @@ const schemaListEntry = (allowRead = false) => {
 }
 
 const schemaList = (allowRead = false) => {
-  // const modifier = (field) => allowRead ? field.optional().allow(null) : field.required();
+  const modifier = (field) => allowRead ? field.optional().allow(null) : field.required();
   const joiObject = {
-    id: joi.number().integer().positive().optional(),
+    
     user_id: joi.number().integer()
       .messages({
         'number.base': 'Invalid user_id: expected number',
         'number.integer': 'Invalid user_id: expected whole number',
       }),
-    name: joi.string().required().max(150)
+    name: modifier(joi.string().max(150)
       .messages({
         'any.required': 'Invalid name: is a required field',
         'string.base': 'Invalid name: expected string format',
         'string.max': 'Invalid name: limit of 150 characters'
-      }),
+      })),
     description: joi.string().max(500)
       .messages({
         'string.base': 'Invalid description: expected string format',
@@ -263,11 +263,11 @@ const schemaList = (allowRead = false) => {
       .messages({
         'boolean.base': 'Invalid is_public: expected boolean format'
       }),
-    state: joi.object().allow(null).default({})
+    state: joi.object().allow(null)
       .messages({
         'object.base': 'Invalid state: expected object format'
       }),
-    properties: joi.object().allow(null).default({})
+    properties: joi.object().allow(null)
       .messages({
         'object.base': 'Invalid properties: expected object format'
       })
@@ -319,7 +319,7 @@ const schemaRelationship = (allowRead = false) => {
         'number.base': 'Invalid target_user_id: expected number format',
         'number.integer': 'Invalid target_user_id: expected an integer'
       }),
-    relationship_types: joi.object().allow(null).default({})
+    relationship_types: joi.object().allow(null)
       .messages({
         'object.base': 'Invalid relationship_types: expected object format'
       })
@@ -375,11 +375,11 @@ const schemaUser = (allowRead = false) => {
         'number.max': 'Invalid visibility: number must not exceed 99'
       })
     ),
-    state: joi.object().allow(null).default({})
+    state: joi.object().allow(null)
       .messages({
         'object.base': 'Invalid state: expected object format'
       }),
-    properties: joi.object().allow(null).default({})
+    properties: joi.object().allow(null)
       .messages({
         'object.base': 'Invalid properties: expected object format'
     })

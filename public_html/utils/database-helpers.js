@@ -62,20 +62,27 @@ const validatedUpdates = async(json, schema) => {
   const values = [];
   const errors = [];
   const search = [];
+  
 
   // item of reqBody
   for (let i = 0; i < reqBody.length; i++) {
     try {
       //THIS IS TO SUPPORT UPDATE ENTRY AND ADD ENTRY
       const targetData = reqBody[i].values ? reqBody[i].values : reqBody[i];
+     
       const tempEntry = await schema.validateAsync(targetData, {stripUnknown: true});
+       console.log(targetData);
+       console.log(tempEntry);
       values.push(tempEntry);
       search.push(reqBody[i].search);
+
     } 
     catch (err) {
       errors.push(err.details[0].message + " - " + reqBody[i].title);
     }
   }
+
+
 
   return {
     values,
@@ -115,12 +122,15 @@ const buildWhereClause = (searchJSON, offset = 0) => {
   let counter = 0;
   let query = "";
 
+  console.log(searchJSON);
+
   if (!Array.isArray(searchJSON)) {
     console.log('Error Type');
     return {}
   }
 
   for (const item of searchJSON) {
+   
     item.operator = item.operator.toUpperCase();
     let caseSensitiveString = `${item.field}`;
     let valueString = "";
@@ -153,8 +163,10 @@ const buildWhereClause = (searchJSON, offset = 0) => {
 const validateSearchInput = async (json, schema) => {
   // DESIGNED TO CLEAN THE JSON AS ALL OF THIS MAY NOT BE APPLIED
   if (!json || (typeof json === 'object' && Object.keys(json).length === 0)) {
+    console.log("?");
     return [];
   }
+   
   let search = [];
   let entry;
   let error;
@@ -168,7 +180,6 @@ const validateSearchInput = async (json, schema) => {
 
     try {
       entry = await schema.validateAsync(tempBuilder, { stripUnknown: true });
-      
       const fieldKey = Object.keys(entry)[0];
 
       if (search !== undefined) {
